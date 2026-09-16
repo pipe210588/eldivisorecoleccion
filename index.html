@@ -200,20 +200,20 @@
       <button type="button" class="auth-tab" id="tabSignup">Crear cuenta</button>
     </div>
     <form id="loginForm" class="auth-form">
-      <input type="email" id="loginEmail" placeholder="Correo electrónico" required autocomplete="email">
+      <input type="text" id="loginEmail" placeholder="Usuario" required autocomplete="username">
       <input type="password" id="loginPassword" placeholder="Contraseña" required autocomplete="current-password">
       <button type="submit" id="loginSubmit">Entrar</button>
       <p class="auth-error" id="loginError" hidden></p>
     </form>
     <form id="signupForm" class="auth-form" hidden>
       <input type="text" id="signupFarm" placeholder="Nombre de la finca" required maxlength="60" autocomplete="organization">
-      <input type="email" id="signupEmail" placeholder="Correo electrónico" required autocomplete="email">
+      <input type="text" id="signupEmail" placeholder="Usuario" required autocomplete="username">
       <input type="password" id="signupPassword" placeholder="Tu contraseña (dueño, mínimo 6 caracteres)" required minlength="6" autocomplete="new-password">
       <input type="password" id="signupMayordomoPassword" placeholder="Contraseña para el mayordomo (mínimo 6 caracteres)" required minlength="6" autocomplete="new-password">
       <button type="submit" id="signupSubmit">Crear cuenta</button>
       <p class="auth-error" id="signupError" hidden></p>
     </form>
-    <p class="auth-hint">Cada finca tiene un correo, con dos contraseñas: la tuya (dueño, acceso completo) y la del mayordomo (solo registra los kilos de la semana actual). Ambos inician sesión con el mismo correo, cada uno con su propia contraseña.</p>
+    <p class="auth-hint">Cada finca tiene un usuario, con dos contraseñas: la tuya (dueño, acceso completo) y la del mayordomo (solo registra los kilos de la semana actual). Ambos inician sesión con el mismo usuario, cada uno con su propia contraseña.</p>
   </div>
 </div>
 
@@ -332,6 +332,12 @@
   var fbApp = initializeApp(firebaseConfig);
   var auth = getAuth(fbApp);
   var firestore = getFirestore(fbApp);
+
+  function normalizeIdentifier(raw){
+    var v = (raw||"").trim();
+    if(v.indexOf("@") !== -1) return v.toLowerCase();
+    return v.toLowerCase().replace(/[^a-z0-9._-]/g, "") + "@eldivisorecoleccion.app";
+  }
 
   function toMayordomoEmail(email){
     var at = email.indexOf("@");
@@ -799,12 +805,12 @@
   function authErrorMessage(err){
     var code = err && err.code;
     var map = {
-      "auth/email-already-in-use": "Ese correo ya tiene una cuenta. Prueba iniciar sesión.",
-      "auth/invalid-email": "El correo no es válido.",
+      "auth/email-already-in-use": "Ese usuario ya tiene una cuenta. Prueba iniciar sesión.",
+      "auth/invalid-email": "Ese usuario tiene caracteres no permitidos. Usa solo letras, números, puntos o guiones.",
       "auth/weak-password": "La contraseña debe tener al menos 6 caracteres.",
-      "auth/user-not-found": "No existe una cuenta con ese correo.",
+      "auth/user-not-found": "No existe una cuenta con ese usuario.",
       "auth/wrong-password": "Contraseña incorrecta.",
-      "auth/invalid-credential": "Correo o contraseña incorrectos.",
+      "auth/invalid-credential": "Usuario o contraseña incorrectos.",
       "auth/too-many-requests": "Demasiados intentos. Espera un momento e inténtalo de nuevo."
     };
     return (code && map[code]) || "Ocurrió un error. Inténtalo de nuevo.";
@@ -825,7 +831,7 @@
 
   document.getElementById("loginForm").addEventListener("submit", function(e){
     e.preventDefault();
-    var email = document.getElementById("loginEmail").value.trim();
+    var email = normalizeIdentifier(document.getElementById("loginEmail").value);
     var pass = document.getElementById("loginPassword").value;
     var btn = document.getElementById("loginSubmit");
     var errEl = document.getElementById("loginError");
@@ -846,7 +852,7 @@
   document.getElementById("signupForm").addEventListener("submit", function(e){
     e.preventDefault();
     var farm = document.getElementById("signupFarm").value.trim();
-    var email = document.getElementById("signupEmail").value.trim();
+    var email = normalizeIdentifier(document.getElementById("signupEmail").value);
     var pass = document.getElementById("signupPassword").value;
     var mayordomoPass = document.getElementById("signupMayordomoPassword").value;
     var btn = document.getElementById("signupSubmit");
