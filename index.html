@@ -208,19 +208,21 @@
     <form id="signupForm" class="auth-form" hidden>
       <input type="text" id="signupFarm" placeholder="Nombre de la finca" required maxlength="60" autocomplete="organization">
       <input type="email" id="signupEmail" placeholder="Correo electrónico" required autocomplete="email">
-      <input type="password" id="signupPassword" placeholder="Contraseña (mínimo 6 caracteres)" required minlength="6" autocomplete="new-password">
+      <input type="password" id="signupPassword" placeholder="Tu contraseña (dueño, mínimo 6 caracteres)" required minlength="6" autocomplete="new-password">
+      <input type="password" id="signupMayordomoPassword" placeholder="Contraseña para el mayordomo (mínimo 6 caracteres)" required minlength="6" autocomplete="new-password">
       <button type="submit" id="signupSubmit">Crear cuenta</button>
       <p class="auth-error" id="signupError" hidden></p>
     </form>
-    <p class="auth-hint">Cada finca tiene su propia cuenta. Comparte el correo y la contraseña de la cuenta con quien también deba registrar kilos (ej. el mayordomo) — todos verán los mismos datos.</p>
+    <p class="auth-hint">Cada finca tiene un correo, con dos contraseñas: la tuya (dueño, acceso completo) y la del mayordomo (solo registra los kilos de la semana actual). Ambos inician sesión con el mismo correo, cada uno con su propia contraseña.</p>
   </div>
 </div>
 
 <div class="wrap" id="appWrap" hidden>
 
   <header class="top">
-    <div class="eyebrow">☕ Libro de recolección semanal</div>
+    <div class="eyebrow">☕ Libro de recolección semanal <span class="badge warn" id="roleBadge" hidden>Mayordomo</span></div>
     <input class="farm-name" id="farmName" placeholder="Nombre de la finca" maxlength="60">
+    <p class="auth-hint" id="mayordomoHint" hidden style="color:color-mix(in srgb, var(--on-primary) 80%, transparent);">Solo puedes editar los kilos de la semana actual. El precio y la nómina los maneja el dueño.</p>
     <div class="weeknav">
       <button id="prevWeek" class="nav-circle" title="Semana anterior" aria-label="Semana anterior">‹</button>
       <span class="label" id="weekLabel">—</span>
@@ -309,7 +311,7 @@
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
     getAuth, onAuthStateChanged, signInWithEmailAndPassword,
     createUserWithEmailAndPassword, signOut
@@ -330,6 +332,12 @@
   var fbApp = initializeApp(firebaseConfig);
   var auth = getAuth(fbApp);
   var firestore = getFirestore(fbApp);
+
+  function toMayordomoEmail(email){
+    var at = email.indexOf("@");
+    if(at < 0) return email;
+    return email.slice(0, at) + "+mayordomo" + email.slice(at);
+  }
 
   var DAYS = [
     {key:"lun", label:"Lun"}, {key:"mar", label:"Mar"}, {key:"mie", label:"Mié"},
@@ -373,6 +381,8 @@
     doc: null,
     farmName: "",
     uid: null,
+    fincaId: null,
+    role: null,
     unsub: null,
     saveTimer: null,
     saving: false,
@@ -387,6 +397,28 @@
   }
 
   function isFocused(fieldId){ return state.focusField === fieldId; }
+
+  function applyRolePermissions(){
+    var isMayordomo = state.role === "mayordomo";
+    var isCurrentWeek = state.weekId === ymd(mondayOf(new Date()));
+    var canEditKg = !isMayordomo || isCurrentWeek;
+
+    document.getElementById("roleBadge").hidden = !isMayordomo;
+    document.getElementById("mayordomoHint").hidden = !isMayordomo;
+    document.getElementById("precioKg").disabled = isMayordomo;
+    document.getElementById("pagadaCheck").disabled = isMayordomo;
+    document.getElementById("farmName").disabled = isMayordomo;
+    document.getElementById("newCogedorName").disabled = !canEditKg;
+    document.getElementById("addCogedorBtn").disabled = !canEditKg;
+
+    var body = document.getElementById("ledgerBody");
+    Array.prototype.forEach.call(body.querySelectorAll("input"), function(input){
+      input.disabled = !canEditKg;
+    });
+    Array.prototype.forEach.call(body.querySelectorAll(".rm-btn"), function(btn){
+      btn.disabled = !canEditKg;
+    });
+  }
 
   function render(){
     document.getElementById("weekLabel").textContent = weekLabel(parseYmd(state.weekId));
@@ -421,6 +453,7 @@
     if(cogedores.length === 0){
       table.hidden = true; empty.hidden = false;
       document.getElementById("ledgerBody").innerHTML = "";
+      applyRolePermissions();
       return;
     }
     table.hidden = false; empty.hidden = true;
@@ -442,6 +475,8 @@
     Object.keys(existingRows).forEach(function(id){
       if(!seen[id]) existingRows[id].remove();
     });
+
+    applyRolePermissions();
   }
 
   function buildRow(cog){
@@ -596,7 +631,7 @@
     setSyncStatus("busy");
   }
 
-  function localKey(weekId){ return "libro-recoleccion:"+(state.uid||"anon")+":"+weekId; }
+  function localKey(weekId){ return "libro-recoleccion:"+(state.fincaId||"anon")+":"+weekId; }
 
   function saveLocalBackup(){
     try{ localStorage.setItem(localKey(state.weekId), JSON.stringify(ensureDoc())); }catch(e){}
@@ -618,7 +653,7 @@
     }
     if(state.saveTimer){ clearTimeout(state.saveTimer); state.saveTimer = null; }
     saveLocalBackup();
-    if(state.uid){ persist(); } else { setSyncStatus("off"); }
+    if(state.fincaId){ persist(); } else { setSyncStatus("off"); }
     showSaveFeedback();
   }
 
@@ -633,13 +668,17 @@
 
   function persist(){
     saveLocalBackup();
-    if(!state.uid){ setSyncStatus("off"); return; }
+    if(!state.fincaId){ setSyncStatus("off"); return; }
+    if(state.role === "mayordomo" && state.weekId !== ymd(mondayOf(new Date()))){
+      setSyncStatus("off");
+      return;
+    }
     var body = JSON.parse(JSON.stringify(ensureDoc()));
     var json = JSON.stringify(body);
     if(json === state.lastSentJSON){ setSyncStatus("on"); return; }
     if(state.saving){ state.pendingResave = true; return; }
     state.saving = true;
-    setDoc(doc(firestore, "fincas", state.uid, "semanas", state.weekId), body).then(function(){
+    setDoc(doc(firestore, "fincas", state.fincaId, "semanas", state.weekId), body).then(function(){
       state.lastSentJSON = json;
       state.saving = false;
       setSyncStatus("on");
@@ -654,10 +693,10 @@
 
   var fincaSaveTimer = null;
   function saveFincaConfig(){
-    if(!state.uid) return;
+    if(!state.fincaId || state.role !== "dueño") return;
     if(fincaSaveTimer) clearTimeout(fincaSaveTimer);
     fincaSaveTimer = setTimeout(function(){
-      setDoc(doc(firestore, "fincas", state.uid), { nombreFinca: state.farmName || "" }, {merge:true}).catch(function(){});
+      setDoc(doc(firestore, "fincas", state.fincaId), { nombreFinca: state.farmName || "" }, {merge:true}).catch(function(){});
     }, 800);
   }
 
@@ -679,8 +718,8 @@
     state.doc = loadLocalBackup(weekId);
     state.lastSentJSON = null;
     render();
-    if(!state.uid) return;
-    var ref = doc(firestore, "fincas", state.uid, "semanas", weekId);
+    if(!state.fincaId) return;
+    var ref = doc(firestore, "fincas", state.fincaId, "semanas", weekId);
     state.unsub = onSnapshot(ref, function(snap){
       if(snap.exists()){
         state.doc = snap.data();
@@ -792,7 +831,11 @@
     var errEl = document.getElementById("loginError");
     errEl.hidden = true;
     btn.disabled = true; btn.textContent = "Entrando…";
-    signInWithEmailAndPassword(auth, email, pass).catch(function(err){
+    signInWithEmailAndPassword(auth, email, pass).catch(function(firstErr){
+      return signInWithEmailAndPassword(auth, toMayordomoEmail(email), pass).catch(function(){
+        throw firstErr;
+      });
+    }).catch(function(err){
       errEl.textContent = authErrorMessage(err);
       errEl.hidden = false;
     }).then(function(){
@@ -805,15 +848,38 @@
     var farm = document.getElementById("signupFarm").value.trim();
     var email = document.getElementById("signupEmail").value.trim();
     var pass = document.getElementById("signupPassword").value;
+    var mayordomoPass = document.getElementById("signupMayordomoPassword").value;
     var btn = document.getElementById("signupSubmit");
     var errEl = document.getElementById("signupError");
     errEl.hidden = true;
     if(!farm){ errEl.textContent = "Escribe el nombre de la finca."; errEl.hidden = false; return; }
+    if(mayordomoPass === pass){
+      errEl.textContent = "La contraseña del mayordomo debe ser distinta a la tuya.";
+      errEl.hidden = false;
+      return;
+    }
     btn.disabled = true; btn.textContent = "Creando…";
+
+    var ownerUid = null;
     createUserWithEmailAndPassword(auth, email, pass).then(function(cred){
+      ownerUid = cred.user.uid;
       state.farmName = farm;
       farmNameInput.value = farm;
-      return setDoc(doc(firestore, "fincas", cred.user.uid), { nombreFinca: farm, creada: Date.now() });
+
+      var secondaryApp = initializeApp(firebaseConfig, "secondary-" + Date.now());
+      var secondaryAuth = getAuth(secondaryApp);
+      return createUserWithEmailAndPassword(secondaryAuth, toMayordomoEmail(email), mayordomoPass).then(function(cred2){
+        var mayordomoUid = cred2.user.uid;
+        return signOut(secondaryAuth).then(function(){
+          return deleteApp(secondaryApp);
+        }).then(function(){
+          return setDoc(doc(firestore, "fincas", ownerUid), {
+            nombreFinca: farm, mayordomoUid: mayordomoUid, precioKg: 0, creada: Date.now()
+          });
+        }).then(function(){
+          return setDoc(doc(firestore, "mayordomos", mayordomoUid), { fincaId: ownerUid });
+        });
+      });
     }).catch(function(err){
       errEl.textContent = authErrorMessage(err);
       errEl.hidden = false;
@@ -828,24 +894,35 @@
 
   onAuthStateChanged(auth, function(user){
     if(state.unsub){ state.unsub(); state.unsub = null; }
-    if(user){
-      state.uid = user.uid;
-      showApp();
-      getDoc(doc(firestore, "fincas", user.uid)).then(function(snap){
-        if(snap.exists()){
-          var cfg = snap.data();
-          state.farmName = cfg.nombreFinca || "";
-          farmNameInput.value = state.farmName;
-          state._seedPrice = cfg.precioKg || 0;
-        }
-      }).catch(function(){}).then(function(){
-        subscribeWeek(state.weekId);
-      });
-    } else {
+    if(!user){
       state.uid = null;
+      state.fincaId = null;
+      state.role = null;
       state.doc = null;
       showAuth();
+      return;
     }
+    state.uid = user.uid;
+    getDoc(doc(firestore, "mayordomos", user.uid)).then(function(mSnap){
+      if(mSnap.exists()){
+        state.role = "mayordomo";
+        state.fincaId = mSnap.data().fincaId;
+      } else {
+        state.role = "dueño";
+        state.fincaId = user.uid;
+      }
+      showApp();
+      return getDoc(doc(firestore, "fincas", state.fincaId));
+    }).then(function(snap){
+      if(snap && snap.exists()){
+        var cfg = snap.data();
+        state.farmName = cfg.nombreFinca || "";
+        farmNameInput.value = state.farmName;
+        state._seedPrice = cfg.precioKg || 0;
+      }
+    }).catch(function(){}).then(function(){
+      subscribeWeek(state.weekId);
+    });
   });
 </script>
 
