@@ -314,7 +314,7 @@
   import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
     getAuth, onAuthStateChanged, signInWithEmailAndPassword,
-    createUserWithEmailAndPassword, signOut
+    createUserWithEmailAndPassword, signOut, inMemoryPersistence, setPersistence
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getFirestore, doc, getDoc, setDoc, onSnapshot
@@ -874,16 +874,20 @@
 
       var secondaryApp = initializeApp(firebaseConfig, "secondary-" + Date.now());
       var secondaryAuth = getAuth(secondaryApp);
-      return createUserWithEmailAndPassword(secondaryAuth, toMayordomoEmail(email), mayordomoPass).then(function(cred2){
+      // In-memory persistence keeps this secondary sign-in isolated: without it, Firebase Auth's
+      // cross-tab sync can hijack the primary session's current user mid-signup.
+      return setPersistence(secondaryAuth, inMemoryPersistence).then(function(){
+        return createUserWithEmailAndPassword(secondaryAuth, toMayordomoEmail(email), mayordomoPass);
+      }).then(function(cred2){
         var mayordomoUid = cred2.user.uid;
-        return signOut(secondaryAuth).then(function(){
-          return deleteApp(secondaryApp);
-        }).then(function(){
-          return setDoc(doc(firestore, "fincas", ownerUid), {
-            nombreFinca: farm, mayordomoUid: mayordomoUid, precioKg: 0, creada: Date.now()
-          });
+        return setDoc(doc(firestore, "fincas", ownerUid), {
+          nombreFinca: farm, mayordomoUid: mayordomoUid, precioKg: 0, creada: Date.now()
         }).then(function(){
           return setDoc(doc(firestore, "mayordomos", mayordomoUid), { fincaId: ownerUid });
+        }).then(function(){
+          return signOut(secondaryAuth);
+        }).then(function(){
+          return deleteApp(secondaryApp);
         });
       });
     }).catch(function(err){
