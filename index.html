@@ -2,6 +2,8 @@
 <title>Libro de Recolección</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Petrona:opsz,wght@8..30,500;8..30,600;8..30,700&family=Karla:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
   :root{
     --bg:#f3ecdd;
@@ -189,7 +191,7 @@
   .auth-hint{color:var(--ink-muted);font-size:.8rem;margin:14px 0 0;line-height:1.5;}
 
   @media print{
-    .auth-wrap, .nav-circle, .today, .save-btn, .logout-btn, .sync,
+    .auth-wrap, .nav-circle, .today, .save-btn, .logout-btn, .pdf-btn, .sync,
     .banner, .add-row, .rm-btn, td.remove-col, #mayordomoHint, footer{
       display:none !important;
     }
@@ -250,6 +252,7 @@
       <button class="save-btn" id="saveBtn" type="button">💾 Guardar</button>
       <button class="today print-btn" id="printBtn" type="button">🖨️ Imprimir</button>
       <button class="today export-btn" id="exportBtn" type="button">📊 Excel</button>
+      <button class="today pdf-btn" id="pdfBtn" type="button">📄 PDF</button>
       <button class="logout-btn" id="logoutBtn" type="button">Cerrar sesión</button>
       <span class="sync" id="syncStatus"><span class="dot" id="syncDot"></span><span id="syncText">conectando…</span></span>
     </div>
@@ -781,6 +784,63 @@
   document.getElementById("saveBtn").addEventListener("click", manualSave);
   document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
   document.getElementById("exportBtn").addEventListener("click", exportCSV);
+  document.getElementById("pdfBtn").addEventListener("click", exportPDF);
+
+  function exportPDF(){
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if(!jsPDFCtor){ alert("No se pudo cargar el generador de PDF. Revisa tu conexión e inténtalo de nuevo."); return; }
+
+    var d = state.doc || blankWeekDoc();
+    var cogedores = d.cogedores || [];
+    var price = Number(d.precioKg) || 0;
+    var totalKg = cogedores.reduce(function(s,c){ return s + totalKgOf(c); }, 0);
+    var totalPago = totalKg * price;
+
+    var pdf = new jsPDFCtor({ unit: "pt", format: "a4" });
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(16);
+    pdf.text(state.farmName || "Finca", 40, 44);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(11);
+    pdf.text("Semana: " + weekLabel(parseYmd(state.weekId)), 40, 62);
+    pdf.text("Precio por kilo: " + fmtCOP.format(price), 40, 78);
+    pdf.text("Total recolectado: " + fmtKg(totalKg) + " kg", 40, 94);
+    pdf.text("Total a pagar: " + fmtCOP.format(totalPago), 40, 110);
+    pdf.text("Nómina: " + (d.pagada ? "Pagada" : "Pendiente"), 40, 126);
+
+    var head = [["Cogedor","Lun","Mar","Mié","Jue","Vie","Sáb","Dom","Total kg","Pago"]];
+    var body = cogedores.map(function(c){
+      var t = totalKgOf(c);
+      return [c.nombre || "Sin nombre"]
+        .concat(DAYS.map(function(day){ return fmtKg(Number(c.kg[day.key])||0); }))
+        .concat([fmtKg(t), fmtCOP.format(t*price)]);
+    });
+    body.push(
+      ["Total semana"]
+        .concat(DAYS.map(function(day){
+          return fmtKg(cogedores.reduce(function(s,c){ return s + (Number(c.kg[day.key])||0); }, 0));
+        }))
+        .concat([fmtKg(totalKg), fmtCOP.format(totalPago)])
+    );
+
+    pdf.autoTable({
+      head: head,
+      body: body,
+      startY: 144,
+      styles: { fontSize: 9, cellPadding: 5 },
+      headStyles: { fillColor: [78, 53, 36] },
+      footStyles: { fillColor: [234, 223, 198], textColor: [20, 20, 19], fontStyle: "bold" },
+      didParseCell: function(data){
+        if(data.row.index === body.length - 1 && data.section === "body"){
+          data.cell.styles.fillColor = [234, 223, 198];
+          data.cell.styles.fontStyle = "bold";
+        }
+      }
+    });
+
+    var slug = (state.farmName || "finca").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    pdf.save("nomina-" + slug + "-" + state.weekId + ".pdf");
+  }
 
   function csvCell(v){
     var s = String(v);
