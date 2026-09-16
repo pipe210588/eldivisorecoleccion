@@ -190,24 +190,6 @@
   .auth-error{color:var(--accent-strong);font-size:.82rem;margin:2px 0 0;}
   .auth-hint{color:var(--ink-muted);font-size:.8rem;margin:14px 0 0;line-height:1.5;}
 
-  @media print{
-    .auth-wrap, .nav-circle, .today, .save-btn, .logout-btn, .pdf-btn, .sync,
-    .banner, .add-row, .rm-btn, td.remove-col, #mayordomoHint, footer{
-      display:none !important;
-    }
-    body{background:#fff;padding:0;}
-    .wrap{padding:0;max-width:none;}
-    header.top{background:#fff;color:#000;border:2px solid #000;border-radius:0;}
-    .eyebrow, .farm-name, .badge{color:#000 !important;}
-    .farm-name{border:none;}
-    .tile{border:1px solid #000;background:#fff;break-inside:avoid;}
-    .tag, .sub{color:#333;}
-    input{border:none !important;background:transparent !important;color:#000 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    input[type=number]{-moz-appearance:textfield;}
-    table{width:100%;}
-    thead th, tfoot td{background:#eee !important;color:#000 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .table-scroll{border-color:#000;}
-  }
 </style>
 
 <div class="wrap auth-wrap" id="authWrap">
@@ -250,9 +232,7 @@
       <button id="nextWeek" class="nav-circle" title="Semana siguiente" aria-label="Semana siguiente">›</button>
       <button class="today" id="gotoToday">Hoy</button>
       <button class="save-btn" id="saveBtn" type="button">💾 Guardar</button>
-      <button class="today print-btn" id="printBtn" type="button">🖨️ Imprimir</button>
-      <button class="today export-btn" id="exportBtn" type="button">📊 Excel</button>
-      <button class="today pdf-btn" id="pdfBtn" type="button">📄 PDF</button>
+      <button class="today pdf-btn" id="pdfBtn" type="button">📄 Generar PDF</button>
       <button class="logout-btn" id="logoutBtn" type="button">Cerrar sesión</button>
       <span class="sync" id="syncStatus"><span class="dot" id="syncDot"></span><span id="syncText">conectando…</span></span>
     </div>
@@ -782,8 +762,6 @@
     goToWeek(ymd(mondayOf(new Date())));
   });
   document.getElementById("saveBtn").addEventListener("click", manualSave);
-  document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
-  document.getElementById("exportBtn").addEventListener("click", exportCSV);
   document.getElementById("pdfBtn").addEventListener("click", exportPDF);
 
   function exportPDF(){
@@ -840,44 +818,6 @@
 
     var slug = (state.farmName || "finca").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     pdf.save("nomina-" + slug + "-" + state.weekId + ".pdf");
-  }
-
-  function csvCell(v){
-    var s = String(v);
-    if(s.indexOf(",")!==-1 || s.indexOf('"')!==-1 || s.indexOf("\n")!==-1){
-      s = '"' + s.replace(/"/g, '""') + '"';
-    }
-    return s;
-  }
-
-  function exportCSV(){
-    var d = state.doc || blankWeekDoc();
-    var cogedores = d.cogedores || [];
-    var price = Number(d.precioKg) || 0;
-    var headers = ["Cogedor","Lun","Mar","Mié","Jue","Vie","Sáb","Dom","Total kg","Pago"];
-    var rows = cogedores.map(function(c){
-      var t = totalKgOf(c);
-      var vals = DAYS.map(function(day){ return Number(c.kg[day.key])||0; });
-      return [c.nombre || "Sin nombre"].concat(vals, [t, t*price]);
-    });
-    var totalKg = cogedores.reduce(function(s,c){ return s + totalKgOf(c); }, 0);
-    var totalRow = ["Total semana"].concat(DAYS.map(function(day){
-      return cogedores.reduce(function(s,c){ return s + (Number(c.kg[day.key])||0); }, 0);
-    }), [totalKg, totalKg*price]);
-    var lines = [headers].concat(rows, [totalRow]).map(function(r){
-      return r.map(csvCell).join(",");
-    });
-    var csv = "﻿" + lines.join("\r\n");
-    var blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
-    var url = URL.createObjectURL(blob);
-    var slug = (state.farmName || "finca").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = "nomina-" + slug + "-" + state.weekId + ".csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   }
 
   document.getElementById("precioKg").addEventListener("focus", function(){ state.focusField = "precio"; });
