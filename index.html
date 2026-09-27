@@ -125,6 +125,9 @@
     border:1px solid transparent;background:var(--bg);border-radius:6px;padding:6px 2px;color:var(--ink);
   }
   td.day-col input:focus{outline:none;border-color:var(--focus);background:var(--surface);}
+  td.day-col input:disabled{opacity:.55;}
+  thead th.today-col{color:var(--accent-strong);box-shadow:inset 0 -2px 0 var(--accent);}
+  td.day-col.today-col{background:color-mix(in srgb, var(--accent-soft) 45%, transparent);}
   td.total-col{font-family:"Space Mono",monospace;font-weight:700;color:var(--ink);}
   td.pago-col{font-family:"Space Mono",monospace;font-weight:700;color:var(--accent-strong);}
   td.remove-col{width:34px;padding:0;}
@@ -190,6 +193,91 @@
   .auth-error{color:var(--accent-strong);font-size:.82rem;margin:2px 0 0;}
   .auth-hint{color:var(--ink-muted);font-size:.8rem;margin:14px 0 0;line-height:1.5;}
 
+  /* ---- pestañas del dueño ---- */
+  .tabs{display:flex;gap:6px;overflow-x:auto;margin-top:16px;padding-bottom:4px;}
+  .tab-btn{
+    flex-shrink:0;padding:8px 14px;border-radius:999px;border:1px solid var(--border);
+    background:var(--surface);color:var(--ink-muted);font-weight:600;font-size:.86rem;cursor:pointer;
+  }
+  .tab-btn:hover{color:var(--ink);border-color:var(--focus);}
+  .tab-btn[aria-selected="true"]{background:var(--primary);color:var(--on-primary);border-color:var(--primary);}
+  .tab-btn:focus-visible, .day-btn:focus-visible, .link-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .private-tag{
+    display:inline-block;margin-left:8px;font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.06em;
+    text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--surface-alt);color:var(--ink-muted);vertical-align:middle;
+  }
+
+  /* ---- tablas y formularios de las secciones nuevas ---- */
+  .cell-input, .field{
+    font-family:"Karla",sans-serif;font-size:.9rem;color:var(--ink);background:var(--bg);
+    border:1px solid transparent;border-radius:6px;padding:6px 8px;width:100%;
+  }
+  .cell-input:focus, .field:focus{outline:none;border-color:var(--focus);background:var(--surface);}
+  .cell-input:disabled, .field:disabled{opacity:.75;cursor:not-allowed;font-style:italic;}
+  .pdf-btn:disabled{opacity:.6;cursor:default;}
+  .cell-input.num, .field.num{font-family:"Space Mono",monospace;font-size:.84rem;text-align:right;}
+  td .cell-input.name{font-weight:600;}
+  .field{border-color:var(--border);padding:9px 10px;}
+  .form-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:14px 16px;border-top:1px solid var(--border);}
+  .form-row label{display:flex;flex-direction:column;gap:4px;font-size:.72rem;font-family:"Space Mono",monospace;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--ink-muted);flex:1;min-width:130px;}
+  .form-row label.check{flex-direction:row;align-items:center;gap:8px;text-transform:none;font-family:"Karla",sans-serif;
+    font-size:.88rem;letter-spacing:0;color:var(--ink);min-width:0;flex:0 0 auto;padding-bottom:9px;}
+  .form-row label.check input, td input[type=checkbox]{width:16px;height:16px;accent-color:var(--good);cursor:pointer;}
+  .primary-btn{
+    font-size:.86rem;font-weight:600;padding:10px 16px;border-radius:8px;border:none;
+    background:var(--primary);color:var(--on-primary);cursor:pointer;
+  }
+  .primary-btn:hover{background:var(--primary-strong);}
+  .link-btn{
+    background:none;border:none;padding:0;color:var(--accent-strong);font-weight:600;font-size:.86rem;
+    cursor:pointer;text-decoration:underline;text-underline-offset:3px;
+  }
+  .day-btn{
+    width:34px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--bg);
+    font-family:"Space Mono",monospace;font-size:.84rem;color:var(--ink);cursor:pointer;
+  }
+  .day-btn.full{background:var(--good-soft);color:var(--good);border-color:var(--good);}
+  .day-btn.half{background:var(--warn-soft);color:var(--warn);border-color:var(--warn);}
+  .day-btn:disabled{opacity:.35;cursor:default;}
+  td.money{font-family:"Space Mono",monospace;font-weight:700;color:var(--accent-strong);text-align:right;white-space:nowrap;}
+  td.muted{color:var(--ink-muted);}
+  .chip{display:inline-block;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+  .chip.venta{background:var(--good-soft);color:var(--good);}
+  .chip.tostion{background:var(--accent-soft);color:var(--accent-strong);}
+  table.wide{min-width:1180px;}
+  table.narrow{min-width:420px;}
+  .form-row label.wide-field{flex:2;min-width:240px;}
+  select.cell-input.si{background:var(--good-soft);color:var(--good);font-weight:700;}
+  .lotes-box summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:10px;padding:4px 0 12px;}
+  .lotes-box summary::-webkit-details-marker{display:none;}
+  .lotes-box summary::before{content:"▸";color:var(--ink-muted);transition:transform .15s;}
+  .lotes-box[open] summary::before{transform:rotate(90deg);}
+  .lotes-box .summary-title{font-family:"Petrona",Georgia,serif;font-size:1.2rem;font-weight:600;}
+  .lotes-box .summary-meta{font-family:"Space Mono",monospace;font-size:.72rem;color:var(--ink-muted);}
+  @media (prefers-reduced-motion: reduce){ .lotes-box summary::before{transition:none;} }
+
+  /* ---- mayordomo ---- */
+  .pay-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;display:grid;gap:14px;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));}
+  .pay-card label{display:flex;flex-direction:column;gap:6px;font-size:.72rem;font-family:"Space Mono",monospace;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--ink-muted);}
+  .pay-card .hint{font-family:"Karla",sans-serif;text-transform:none;letter-spacing:0;font-size:.8rem;}
+
+  /* ---- resumen ---- */
+  .summary{min-width:560px;}
+  .summary th, .summary td{text-align:right;padding:10px 14px;}
+  .summary th:first-child, .summary td:first-child{text-align:left;}
+  .summary td{font-family:"Space Mono",monospace;font-variant-numeric:tabular-nums;font-size:.86rem;}
+  .summary td:first-child{font-family:"Karla",sans-serif;font-size:.92rem;}
+  .summary tr.group td{background:var(--surface-alt);font-family:"Space Mono",monospace;font-size:.68rem;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);padding:8px 14px;}
+  .summary tr.total td{font-weight:700;color:var(--accent-strong);}
+  .summary tr.key td{font-weight:700;font-size:.95rem;}
+  .note{color:var(--ink-muted);font-size:.8rem;line-height:1.5;margin:12px 2px 0;max-width:70ch;}
+  .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .toolbar .status{font-family:"Space Mono",monospace;font-size:.72rem;color:var(--ink-muted);}
+
 </style>
 
 <div class="wrap auth-wrap" id="authWrap">
@@ -225,19 +313,30 @@
   <header class="top">
     <div class="eyebrow">☕ Libro de recolección semanal <span class="badge warn" id="roleBadge" hidden>Mayordomo</span></div>
     <input class="farm-name" id="farmName" placeholder="Nombre de la finca" maxlength="60">
-    <p class="auth-hint" id="mayordomoHint" hidden style="color:color-mix(in srgb, var(--on-primary) 80%, transparent);">Solo puedes editar los kilos de la semana actual. El precio y la nómina los maneja el dueño.</p>
+    <p class="auth-hint" id="mayordomoHint" hidden style="color:color-mix(in srgb, var(--on-primary) 80%, transparent);">Solo puedes registrar los kilos de hoy. Los días anteriores, el precio y la nómina los maneja el dueño.</p>
     <div class="weeknav">
       <button id="prevWeek" class="nav-circle" title="Semana anterior" aria-label="Semana anterior">‹</button>
       <span class="label" id="weekLabel">—</span>
       <button id="nextWeek" class="nav-circle" title="Semana siguiente" aria-label="Semana siguiente">›</button>
       <button class="today" id="gotoToday">Hoy</button>
       <button class="save-btn" id="saveBtn" type="button">💾 Guardar</button>
-      <button class="today pdf-btn" id="pdfBtn" type="button">📄 Generar PDF</button>
+      <button class="today pdf-btn" id="pdfBtn" type="button">📄 PDF recolección</button>
+      <button class="today pdf-btn" id="pdfOwnerBtn" type="button" hidden>📊 Informe del dueño (PDF)</button>
       <button class="logout-btn" id="logoutBtn" type="button">Cerrar sesión</button>
       <span class="sync" id="syncStatus"><span class="dot" id="syncDot"></span><span id="syncText">conectando…</span></span>
     </div>
   </header>
 
+  <nav class="tabs" id="ownerTabs" role="tablist" aria-label="Secciones" hidden>
+    <button type="button" class="tab-btn" role="tab" data-tab="recoleccion" id="tab-recoleccion" aria-selected="true">Recolección</button>
+    <button type="button" class="tab-btn" role="tab" data-tab="jornales" id="tab-jornales" aria-selected="false">Jornales y contratos</button>
+    <button type="button" class="tab-btn" role="tab" data-tab="insumos" id="tab-insumos" aria-selected="false">Insumos y facturas</button>
+    <button type="button" class="tab-btn" role="tab" data-tab="mayordomo" id="tab-mayordomo" aria-selected="false">Mayordomo</button>
+    <button type="button" class="tab-btn" role="tab" data-tab="pergamino" id="tab-pergamino" aria-selected="false">Pergamino</button>
+    <button type="button" class="tab-btn" role="tab" data-tab="resumen" id="tab-resumen" aria-selected="false">Resumen</button>
+  </nav>
+
+  <div class="panel" id="panel-recoleccion">
   <div class="tiles">
     <div class="tile">
       <div class="tag">Total recolectado</div>
@@ -272,7 +371,7 @@
         <thead>
           <tr>
             <th class="name-col">Cogedor</th>
-            <th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th>
+            <th data-day="lun">Lun</th><th data-day="mar">Mar</th><th data-day="mie">Mié</th><th data-day="jue">Jue</th><th data-day="vie">Vie</th><th data-day="sab">Sáb</th><th data-day="dom">Dom</th>
             <th class="total-col">Total kg</th>
             <th class="pago-col">Pago</th>
             <th></th>
@@ -306,6 +405,185 @@
       </div>
     </div>
   </section>
+  </div>
+
+  <!-- ===== Jornales y contratos (dueño y mayordomo; el mayordomo solo registra hoy y no marca pagos) ===== -->
+  <div class="panel" id="panel-jornales" hidden>
+    <div class="tiles">
+      <div class="tile"><div class="tag">Jornales de la semana</div><div class="val num" id="jorTotalDias">0</div><div class="sub" id="jorTrabajadores">0 trabajadores</div></div>
+      <div class="tile"><div class="tag">Total a pagar</div><div class="val num" id="jorTotalPago">$0</div><div class="sub">jornales + contratos</div></div>
+      <div class="tile"><div class="tag">Trabajadores pagados</div><div class="val num" id="jorPagados">0 de 0</div><div class="sub">se marca abajo, por trabajador</div></div>
+    </div>
+    <section class="ledger">
+      <h2>Registro diario de labores</h2>
+      <p class="lede">Una línea por trabajador, por día y por lote. Anota qué se hizo y si la labor quedó terminada en todo el lote ese día. Un contrato cubre toda la semana.</p>
+      <p class="banner" id="jorMayHint" hidden>Solo puedes registrar y corregir las labores de hoy y los contratos de esta semana. Los pagos los marca el dueño.</p>
+      <div class="table-scroll">
+        <table id="jorTable" class="wide" hidden>
+          <thead><tr>
+            <th>Día</th><th class="name-col">Trabajador</th><th>Lote</th><th>Labor</th><th>Jornada</th>
+            <th>Valor</th><th class="pago-col">Total</th><th>¿Terminó el lote?</th><th class="name-col">Nota del trabajo</th><th></th>
+          </tr></thead>
+          <tbody id="jorBody"></tbody>
+        </table>
+        <div class="empty" id="jorEmpty">
+          <strong>Sin labores registradas esta semana</strong>
+          <p>Registra la primera labor abajo.</p>
+        </div>
+        <div class="form-row">
+          <label>Día<select class="field" id="jorDia"></select></label>
+          <label>Trabajador<input class="field" id="jorNombre" type="text" maxlength="60" placeholder="Nombre" list="jorNombres"></label>
+          <label>Lote<select class="field" id="jorLote"></select></label>
+          <label>Labor<select class="field" id="jorLabor"></select></label>
+          <label>Jornada<select class="field" id="jorJornada">
+            <option value="1">Día completo</option><option value="0.5">Medio día</option><option value="contrato">Contrato</option>
+          </select></label>
+          <label><span id="jorValorLabel">Valor del jornal</span><input class="field num" id="jorValor" type="number" inputmode="numeric" min="0" step="1000"></label>
+          <label>¿Terminó la labor en todo el lote?<select class="field" id="jorTerminada"><option value="no">No</option><option value="si">Sí</option></select></label>
+          <label class="wide-field">Nota del trabajo<input class="field" id="jorNota" type="text" maxlength="200" placeholder="Ej.: se fumigó contra la roya con …"></label>
+          <button type="button" class="primary-btn" id="jorAddBtn">Agregar</button>
+        </div>
+        <datalist id="jorNombres"></datalist>
+      </div>
+    </section>
+
+    <section class="ledger">
+      <h2>Pago de la semana por trabajador</h2>
+      <p class="lede">Se calcula solo con el registro de arriba. Marca a cada trabajador cuando le pagues.</p>
+      <div class="table-scroll">
+        <table id="jorPagoTable" class="narrow" hidden>
+          <thead><tr><th class="name-col">Trabajador</th><th>Jornales</th><th>Contratos</th><th class="pago-col">Total</th><th>Pagado</th></tr></thead>
+          <tbody id="jorPagoBody"></tbody>
+        </table>
+        <div class="empty" id="jorPagoEmpty"><p>Aparece cuando registres la primera labor.</p></div>
+      </div>
+    </section>
+
+    <section class="ledger" id="lotesSection">
+      <details class="lotes-box" id="lotesBox">
+        <summary><span class="summary-title">Lotes de la finca</span> <span class="summary-meta" id="lotesMeta">sin lotes</span></summary>
+        <p class="lede">Los lotes que aparecen al registrar labores. Si cambias un nombre, las labores ya registradas conservan el nombre con que se guardaron.</p>
+        <div class="table-scroll">
+          <table id="lotesTable" class="narrow" hidden>
+            <thead><tr><th class="name-col">Lote</th><th>Hectáreas</th><th></th></tr></thead>
+            <tbody id="lotesBody"></tbody>
+          </table>
+          <div class="empty" id="lotesEmpty">
+            <strong>Todavía no hay lotes</strong>
+            <p><button type="button" class="link-btn" id="lotesCargarDiviso">Cargar los 6 lotes de El Diviso (15,5 ha)</button> o agrega uno abajo.</p>
+          </div>
+          <div class="form-row">
+            <label class="wide-field">Nombre del lote<input class="field" id="loteNombre" type="text" maxlength="60"></label>
+            <label>Hectáreas<input class="field num" id="loteHa" type="number" inputmode="decimal" min="0" step="0.1"></label>
+            <button type="button" class="primary-btn" id="loteAddBtn">Agregar lote</button>
+          </div>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <!-- ===== Insumos y facturas (solo dueño) ===== -->
+  <div class="panel" id="panel-insumos" hidden>
+    <div class="tiles">
+      <div class="tile"><div class="tag">Compras de la semana</div><div class="val num" id="insTotal">$0</div><div class="sub" id="insCount">0 compras</div></div>
+      <div class="tile"><div class="tag">Con factura electrónica</div><div class="val num" id="insConFactura">$0</div><div class="sub">cuentan para el IVA a favor</div></div>
+      <div class="tile"><div class="tag">Sin factura</div><div class="val num" id="insSinFactura">$0</div><div class="sub">recibos o remisiones</div></div>
+    </div>
+    <section class="ledger">
+      <h2>Insumos y facturas <span class="private-tag">solo dueño</span></h2>
+      <p class="lede">Abonos, agroquímicos, herramientas, combustible y demás compras de la finca. Marca la casilla cuando la compra tenga factura electrónica.</p>
+      <div class="table-scroll">
+        <table id="insTable" hidden>
+          <thead><tr>
+            <th>Fecha</th><th class="name-col">Proveedor</th><th class="name-col">Concepto</th><th>Categoría</th>
+            <th>Valor</th><th>Factura</th><th></th>
+          </tr></thead>
+          <tbody id="insBody"></tbody>
+        </table>
+        <div class="empty" id="insEmpty"><strong>Sin compras registradas esta semana</strong><p>Agrega la primera factura o recibo abajo.</p></div>
+        <div class="form-row">
+          <label>Fecha<input class="field" id="insFecha" type="date"></label>
+          <label>Proveedor<input class="field" id="insProveedor" type="text" maxlength="60" placeholder="Almacén o persona"></label>
+          <label>Concepto<input class="field" id="insConcepto" type="text" maxlength="80" placeholder="Qué se compró"></label>
+          <label>Categoría<select class="field" id="insCategoria"></select></label>
+          <label>Valor total<input class="field num" id="insValor" type="number" inputmode="numeric" min="0" step="100"></label>
+          <label class="check"><input type="checkbox" id="insFactura"> Factura electrónica</label>
+          <button type="button" class="primary-btn" id="insAddBtn">Agregar</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== Mayordomo (solo dueño) ===== -->
+  <div class="panel" id="panel-mayordomo" hidden>
+    <section class="ledger">
+      <h2>Pago del mayordomo <span class="private-tag">solo dueño</span></h2>
+      <p class="lede">El sueldo semanal se guarda una sola vez. Cada semana registras lo que realmente se le pagó; solo eso entra al resumen.</p>
+      <div class="pay-card">
+        <label>Sueldo semanal (base)<input class="field num" id="mayBase" type="number" inputmode="numeric" min="0" step="1000"><span class="hint">Se usa para llenar el pago con un toque.</span></label>
+        <label>Pago de esta semana<input class="field num" id="mayPago" type="number" inputmode="numeric" min="0" step="1000"><button type="button" class="link-btn" id="mayUsarBase">Usar el sueldo base</button></label>
+        <label>Otros pagos<input class="field num" id="mayOtros" type="number" inputmode="numeric" min="0" step="1000"><span class="hint">Bonificación, auxilio, horas extra.</span></label>
+        <label>Nota<input class="field" id="mayNota" type="text" maxlength="120" placeholder="Opcional"></label>
+      </div>
+      <div class="tiles">
+        <div class="tile"><div class="tag">Total pagado al mayordomo</div><div class="val num" id="mayTotal">$0</div><div class="sub">pago + otros</div></div>
+        <div class="tile pagada"><div class="tag">Pago de la semana</div>
+          <label class="pill-toggle"><input type="checkbox" id="mayPagado"><span id="mayPagadoLabel"><span class="badge warn">Pendiente</span></span></label>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== Pergamino (solo dueño) ===== -->
+  <div class="panel" id="panel-pergamino" hidden>
+    <div class="tiles">
+      <div class="tile"><div class="tag">Vendido a Almacafé</div><div class="val num" id="perVendidoKg">0 kg</div><div class="sub" id="perVendidoCop">$0</div></div>
+      <div class="tile"><div class="tag">Llevado a tostión</div><div class="val num" id="perTostionKg">0 kg</div><div class="sub" id="perTostadoKg">0 kg tostados</div></div>
+      <div class="tile"><div class="tag">Precio por carga vendida</div><div class="val num" id="perPrecioCarga">—</div><div class="sub">carga de 125 kg</div></div>
+    </div>
+    <section class="ledger">
+      <h2>Salidas de pergamino seco <span class="private-tag">solo dueño</span></h2>
+      <p class="lede">Registra cada salida de pergamino: si se vendió a Almacafé, con precio por kilo y total de la factura; si se llevó a tostar, con los kilos entregados y los kilos tostados que devolvieron.</p>
+      <div class="table-scroll">
+        <table id="perTable" hidden>
+          <thead><tr>
+            <th>Fecha</th><th>Destino</th><th>Kg pergamino</th><th>Precio / kg</th><th>Total factura</th>
+            <th>Kg tostados</th><th>Merma</th><th></th>
+          </tr></thead>
+          <tbody id="perBody"></tbody>
+        </table>
+        <div class="empty" id="perEmpty"><strong>Sin salidas de pergamino esta semana</strong><p>Registra la primera venta o entrega a tostión abajo.</p></div>
+        <div class="form-row">
+          <label>Destino<select class="field" id="perDestino"><option value="venta">Venta a Almacafé</option><option value="tostion">A tostión</option></select></label>
+          <label>Fecha<input class="field" id="perFecha" type="date"></label>
+          <label>Kg de pergamino<input class="field num" id="perKg" type="number" inputmode="decimal" min="0" step="0.1"></label>
+          <label id="perPrecioWrap">Precio por kg<input class="field num" id="perPrecio" type="number" inputmode="numeric" min="0" step="10"></label>
+          <label id="perTotalWrap">Total factura<input class="field num" id="perTotal" type="number" inputmode="numeric" min="0" step="100"></label>
+          <label id="perKgTostadoWrap" hidden>Kg tostados recibidos<input class="field num" id="perKgTostado" type="number" inputmode="decimal" min="0" step="0.1" placeholder="Opcional"></label>
+          <button type="button" class="primary-btn" id="perAddBtn">Agregar</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== Resumen (solo dueño) ===== -->
+  <div class="panel" id="panel-resumen" hidden>
+    <section class="ledger">
+      <h2>Resumen de costos <span class="private-tag">solo dueño</span></h2>
+      <p class="lede" id="resLede">Costos de la finca y costo por carga de pergamino.</p>
+      <div class="toolbar">
+        <button type="button" class="primary-btn" id="resRefresh">Actualizar</button>
+        <span class="status" id="resStatus"></span>
+      </div>
+      <div class="table-scroll">
+        <table class="summary">
+          <thead><tr><th>Concepto</th><th id="resHeadSemana">Semana</th><th id="resHeadMes">Mes</th><th id="resHeadAnio">Año</th></tr></thead>
+          <tbody id="resBody"></tbody>
+        </table>
+      </div>
+      <p class="note">Cada semana cuenta en el mes y el año de su lunes. El costo por carga usa el pergamino que salió de la finca, vendido o llevado a tostar; el que sigue guardado se cuenta cuando salga. El pago al mayordomo solo cuenta en las semanas donde se registró.</p>
+    </section>
+  </div>
 
   <footer>
     <span id="lastUpdated"></span>
@@ -321,7 +599,7 @@
     createUserWithEmailAndPassword, signOut, inMemoryPersistence, setPersistence
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, setDoc, onSnapshot
+    getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   var firebaseConfig = {
@@ -384,6 +662,16 @@
   function genId(){ return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
   function emptyKg(){ var o={}; DAYS.forEach(function(d){ o[d.key]=0; }); return o; }
   function totalKgOf(cog){ return DAYS.reduce(function(s,d){ return s + (Number(cog.kg[d.key])||0); }, 0); }
+  // Día de hoy como clave de DAYS (getDay: 0 = domingo)
+  function todayKey(){ return ["dom","lun","mar","mie","jue","vie","sab"][new Date().getDay()]; }
+  // Un cogedor sin kilos en otros días es una fila nueva: el mayordomo puede corregir su nombre o quitarla
+  function hasKgOutsideToday(cog){
+    var t = todayKey();
+    return DAYS.some(function(d){ return d.key !== t && (Number(cog.kg[d.key])||0) > 0; });
+  }
+  function mayordomoCanEditDay(dayKey){
+    return state.role !== "mayordomo" || (state.weekId === ymd(mondayOf(new Date())) && dayKey === todayKey());
+  }
 
   // ---------------- state ----------------
   var state = {
@@ -421,12 +709,25 @@
     document.getElementById("newCogedorName").disabled = !canEditKg;
     document.getElementById("addCogedorBtn").disabled = !canEditKg;
 
-    var body = document.getElementById("ledgerBody");
-    Array.prototype.forEach.call(body.querySelectorAll("input"), function(input){
-      input.disabled = !canEditKg;
+    // Resalta la columna de hoy (solo en la semana actual)
+    var tKey = isCurrentWeek ? todayKey() : null;
+    Array.prototype.forEach.call(document.querySelectorAll("#ledgerTable thead th[data-day]"), function(th){
+      th.classList.toggle("today-col", th.getAttribute("data-day") === tKey);
     });
-    Array.prototype.forEach.call(body.querySelectorAll(".rm-btn"), function(btn){
-      btn.disabled = !canEditKg;
+
+    var body = document.getElementById("ledgerBody");
+    var cogedores = (state.doc && state.doc.cogedores) || [];
+    Array.prototype.forEach.call(body.querySelectorAll("tr[data-id]"), function(tr){
+      var cog = cogedores.find(function(c){ return c.id === tr.getAttribute("data-id"); });
+      // El mayordomo solo corrige el nombre o quita filas que no tienen kilos de otros días
+      var canEditRow = canEditKg && (!isMayordomo || (cog && !hasKgOutsideToday(cog)));
+      tr.querySelector("td.name-col input").disabled = !canEditRow;
+      tr.querySelector(".rm-btn").disabled = !canEditRow;
+      Array.prototype.forEach.call(tr.querySelectorAll("td.day-col"), function(td){
+        var dayKey = td.getAttribute("data-day");
+        td.classList.toggle("today-col", dayKey === tKey);
+        td.querySelector("input").disabled = !(canEditKg && mayordomoCanEditDay(dayKey));
+      });
     });
   }
 
@@ -506,6 +807,7 @@
     DAYS.forEach(function(day){
       var td = document.createElement("td");
       td.className = "day-col";
+      td.setAttribute("data-day", day.key);
       var input = document.createElement("input");
       input.type = "number"; input.min="0"; input.step="0.5"; input.inputMode="decimal";
       input.addEventListener("focus", function(){ state.focusField = "kg:"+cog.id+":"+day.key; });
@@ -564,7 +866,7 @@
   }
 
   function recomputeLocal(cogId, dayKey, rawVal){
-    if(!state.doc) return;
+    if(!state.doc || !mayordomoCanEditDay(dayKey)) return;
     var cog = (state.doc.cogedores||[]).find(function(c){ return c.id===cogId; });
     if(!cog) return;
     cog.kg[dayKey] = Number(rawVal)||0;
@@ -577,6 +879,7 @@
   }
 
   function commitKg(cogId, dayKey, rawVal){
+    if(!mayordomoCanEditDay(dayKey)) return;
     var d = ensureDoc();
     var cog = (d.cogedores||[]).find(function(c){ return c.id===cogId; });
     if(!cog) return;
@@ -664,6 +967,8 @@
     if(state.saveTimer){ clearTimeout(state.saveTimer); state.saveTimer = null; }
     saveLocalBackup();
     if(state.fincaId){ persist(); } else { setSyncStatus("off"); }
+    if(jor.timer) jor.persist();
+    if(priv.timer) priv.persist();
     showSaveFeedback();
   }
 
@@ -748,6 +1053,10 @@
     state.weekId = weekId;
     state.removeConfirm = null;
     subscribeWeek(weekId);
+    if(state.role){
+      subscribeSecciones(weekId);
+      if(state.tab === "resumen") loadResumen();
+    }
   }
 
   document.getElementById("prevWeek").addEventListener("click", function(){
@@ -852,6 +1161,1087 @@
     saveFincaConfig();
   });
   farmNameInput.addEventListener("keydown", function(e){ if(e.key==="Enter"){ farmNameInput.blur(); } });
+
+  // =====================================================================
+  //  Secciones nuevas
+  //  - Jornales y contratos: fincas/{id}/jornales/{lunes}. Los usan el dueño y
+  //    el mayordomo. El mayordomo solo registra labores de hoy y contratos de la
+  //    semana actual (lo controla la página) y no puede cambiar los pagos (lo
+  //    controla la regla de Firestore).
+  //  - Lotes, trabajadores y valor del jornal: fincas/{id}/compartido/config.
+  //    Lo lee el mayordomo; solo el dueño lo cambia.
+  //  - Insumos, pago del mayordomo y pergamino: fincas/{id}/privado/{lunes};
+  //    sueldo base en fincas/{id}/privado/config. Solo el dueño.
+  // =====================================================================
+  var LABORES = ["Plateo","Fertilización","Fumigación","Guadaña y desyerba","Poda y zoqueo","Resiembra","Beneficio y secado","Mantenimiento","Otra"];
+  var CATEGORIAS = ["Fertilizante","Agroquímico","Herramienta","Combustible","Servicios","Transporte","Otro"];
+  var MESES_LARGOS = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  var DIAS_CORTOS = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+  var TABS = ["recoleccion","jornales","insumos","mayordomo","pergamino","resumen"];
+  var TABS_MAYORDOMO = ["recoleccion","jornales"];
+  var KG_CARGA = 125;
+  var LOTES_DIVISO = [
+    {nombre:"El Tamalazo", ha:2.2}, {nombre:"El Tigre", ha:2.3}, {nombre:"Entrada - Beneficiadero", ha:1.4},
+    {nombre:"Espejos con tira bordeando carretera", ha:5.4}, {nombre:"Los Guayabos", ha:3}, {nombre:"Sacha Frutos tira derecha", ha:1.2}
+  ];
+
+  var privCfg = { sueldoMayordomo:0 };
+  var sharedCfg = { lotes:[], trabajadores:[], valorJornal:0 };
+  var legacyCfg = null;      // configuración de la versión de prueba (lotes guardados en privado/config)
+  var privCfgTimer = null, sharedCfgTimer = null, sharedUnsub = null;
+  var removeKey = null;
+  var jorDiaElegido = null;
+  state.tab = "recoleccion";
+
+  // ---------------- utilidades ----------------
+  function $(id){ return document.getElementById(id); }
+  function isOwnerRole(){ return state.role === "dueño"; }
+  function isMayordomoRole(){ return state.role === "mayordomo"; }
+  function num(v){ var n = parseFloat(v); return isFinite(n) && n >= 0 ? n : 0; }
+  function arr(v){ return Array.isArray(v) ? v : []; }
+  function findById(list, id){ return (list||[]).find(function(x){ return x.id === id; }); }
+  function el(tag, props, kids){
+    var n = document.createElement(tag);
+    if(props) Object.keys(props).forEach(function(k){
+      if(k === "text") n.textContent = props[k];
+      else if(k === "cls") n.className = props[k];
+      else if(k.indexOf("data-") === 0 || k.indexOf("aria-") === 0 || k === "title") n.setAttribute(k, props[k]);
+      else n[k] = props[k];
+    });
+    (kids||[]).forEach(function(c){ if(c) n.appendChild(c); });
+    return n;
+  }
+  function fillOptions(select, options, current){
+    select.innerHTML = "";
+    var values = options.map(function(o){ return Array.isArray(o) ? o[0] : o; });
+    if(current && values.indexOf(current) === -1) options = options.concat([current]);
+    options.forEach(function(o){
+      var v = Array.isArray(o) ? o[0] : o, label = Array.isArray(o) ? o[1] : o;
+      select.appendChild(el("option", {value:v, text:label}));
+    });
+    if(current) select.value = current;
+  }
+  // No pisa lo que la persona está escribiendo en ese campo
+  function setVal(input, v, blankZero){
+    if(!input || document.activeElement === input) return;
+    input.value = (blankZero && !Number(v)) ? "" : (v == null ? "" : v);
+  }
+  function todayYmd(){ return ymd(new Date()); }
+  function isCurrentWeek(){ return state.weekId === ymd(mondayOf(new Date())); }
+  function weekDates(weekId){
+    var m = parseYmd(weekId), out = [];
+    for(var i=0;i<7;i++){ var d = new Date(m); d.setDate(d.getDate()+i); out.push(ymd(d)); }
+    return out;
+  }
+  function defaultFecha(){ var t = todayYmd(); return weekDates(state.weekId).indexOf(t) !== -1 ? t : state.weekId; }
+  // Una labor: jornada 1 o 0.5 (jornales × valor del día) o "contrato" (valor pactado, toda la semana)
+  function esContrato(x){ return x.jornada === "contrato"; }
+  function laborJornales(x){ return esContrato(x) ? 0 : (Number(x.jornada) || 0); }
+  function laborTotal(x){ return esContrato(x) ? num(x.valor) : laborJornales(x) * num(x.valor); }
+  function nombreKey(n){ return String(n || "").trim().toLowerCase(); }
+  function fmtNum(n){ return (Math.round(n*100)/100).toLocaleString("es-CO", {maximumFractionDigits:2}); }
+  function diaLabel(fecha){ var d = parseYmd(fecha); return DIAS_CORTOS[d.getDay()] + " " + d.getDate(); }
+  function fechaCorta(f){ if(!f) return ""; var d = parseYmd(f); return d.getDate() + " " + MESES[d.getMonth()]; }
+  function focusInNewPanels(){
+    var a = document.activeElement;
+    if(!a || !/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return false;
+    var p = a.closest(".panel");
+    return !!p && p.id !== "panel-recoleccion";
+  }
+
+  // ---------------- documentos semanales (jornales y privado) ----------------
+  // Guarda solo los campos que cambiaron (updateDoc), para que el dueño y el
+  // mayordomo no se pisen: el dueño marca pagos y el mayordomo agrega labores.
+  function makeSync(coll, blank, normalize, allowed){
+    var S = { weekId:null, doc:null, server:null, exists:false, saving:false, pending:false, timer:null, unsub:null, deferred:false };
+    function ref(weekId){ return doc(firestore, "fincas", state.fincaId, coll, weekId); }
+    S.view = function(){ return S.doc ? normalize(S.doc) : blank(); };
+    S.ensure = function(){ if(!S.doc) S.doc = blank(); return normalize(S.doc); };
+    S.schedule = function(immediate){
+      if(!allowed()) return;
+      if(S.timer) clearTimeout(S.timer);
+      S.timer = setTimeout(S.persist, immediate ? 0 : 600);
+      setSyncStatus("busy");
+    };
+    function write(weekId, body){
+      if(!S.exists) return setDoc(ref(weekId), body).then(function(){ return body; });
+      var changes = {}, server = S.server || {};
+      Object.keys(body).forEach(function(k){ if(JSON.stringify(body[k]) !== JSON.stringify(server[k])) changes[k] = body[k]; });
+      if(!Object.keys(changes).length) return Promise.resolve(null);
+      return updateDoc(ref(weekId), changes).then(function(){ return changes; }, function(err){
+        if(err && err.code === "not-found") return setDoc(ref(weekId), body).then(function(){ return body; });
+        throw err;
+      });
+    }
+    S.persist = function(){
+      if(S.timer){ clearTimeout(S.timer); S.timer = null; }
+      if(!allowed() || !state.fincaId || !S.doc || !S.weekId) return;
+      if(S.saving){ S.pending = true; return; }
+      var weekId = S.weekId, body = JSON.parse(JSON.stringify(S.doc));
+      S.saving = true;
+      write(weekId, body).then(function(written){
+        if(written && S.weekId === weekId){
+          S.server = JSON.parse(JSON.stringify(Object.assign({}, S.server || {}, written)));
+          S.exists = true;
+          updateLastSaved();
+        }
+        S.saving = false;
+        setSyncStatus("on");
+        if(S.pending){ S.pending = false; S.persist(); }
+      }).catch(function(){
+        S.saving = false;
+        setSyncStatus("off");
+        if(S.pending){ S.pending = false; S.persist(); }
+      });
+    };
+    // Al cambiar de semana, guarda de inmediato lo pendiente de la semana que se deja
+    S.flush = function(){
+      if(!S.timer && !S.pending) return;
+      if(S.timer){ clearTimeout(S.timer); S.timer = null; }
+      S.pending = false;
+      if(!allowed() || !state.fincaId || !S.doc || !S.weekId) return;
+      write(S.weekId, JSON.parse(JSON.stringify(S.doc))).catch(function(){ setSyncStatus("off"); });
+    };
+    S.stop = function(){
+      if(S.unsub){ S.unsub(); S.unsub = null; }
+      S.weekId = null; S.doc = null; S.server = null; S.exists = false; S.deferred = false;
+    };
+    S.subscribe = function(weekId, onChange){
+      S.flush();
+      if(S.unsub){ S.unsub(); S.unsub = null; }
+      S.weekId = weekId; S.doc = null; S.server = null; S.exists = false; S.deferred = false;
+      if(!allowed() || !state.fincaId) return;
+      S.unsub = onSnapshot(ref(weekId), function(snap){
+        if(S.weekId !== weekId) return;
+        S.exists = snap.exists();
+        S.server = snap.exists() ? snap.data() : null;
+        if(S.timer || S.saving) return; // hay cambios propios por guardar: mandan los propios
+        S.doc = snap.exists() ? normalize(snap.data()) : null;
+        if(focusInNewPanels()){ S.deferred = true; return; }
+        onChange();
+      }, function(){ setSyncStatus("off"); });
+    };
+    return S;
+  }
+  function blankJor(){ return { labores:[], pagosJornales:{} }; }
+  function normalizeJor(d){
+    d.labores = arr(d.labores);
+    d.pagosJornales = (d.pagosJornales && typeof d.pagosJornales === "object") ? d.pagosJornales : {};
+    return d;
+  }
+  function blankPriv(){ return { insumos:[], mayordomo:{ pago:0, otros:0, nota:"", pagado:false }, pergamino:[] }; }
+  function normalizePriv(d){
+    d.insumos = arr(d.insumos);
+    d.pergamino = arr(d.pergamino);
+    d.mayordomo = d.mayordomo || { pago:0, otros:0, nota:"", pagado:false };
+    return d;
+  }
+  var jor = makeSync("jornales", blankJor, normalizeJor, function(){ return !!state.role; });
+  var priv = makeSync("privado", blankPriv, normalizePriv, isOwnerRole);
+
+  document.addEventListener("focusout", function(){
+    setTimeout(function(){
+      if((priv.deferred || jor.deferred) && !focusInNewPanels()){ priv.deferred = false; jor.deferred = false; renderPrivado(); }
+    }, 0);
+  });
+
+  // ---------------- configuración ----------------
+  function loadPrivCfg(){
+    if(!isOwnerRole()) return Promise.resolve();
+    return getDoc(doc(firestore, "fincas", state.fincaId, "privado", "config")).then(function(s){
+      if(s.exists()){ var c = s.data(); privCfg.sueldoMayordomo = num(c.sueldoMayordomo); legacyCfg = c; }
+    }).catch(function(){});
+  }
+  function savePrivCfg(){
+    if(!isOwnerRole() || !state.fincaId) return;
+    if(privCfgTimer) clearTimeout(privCfgTimer);
+    privCfgTimer = setTimeout(function(){
+      privCfgTimer = null;
+      setDoc(doc(firestore, "fincas", state.fincaId, "privado", "config"), { sueldoMayordomo: privCfg.sueldoMayordomo || 0 })
+        .catch(function(){ setSyncStatus("off"); });
+    }, 600);
+  }
+  function subscribeShared(){
+    if(sharedUnsub){ sharedUnsub(); sharedUnsub = null; }
+    if(!state.fincaId) return;
+    sharedUnsub = onSnapshot(doc(firestore, "fincas", state.fincaId, "compartido", "config"), function(snap){
+      if(sharedCfgTimer) return; // cambios propios por guardar
+      if(snap.exists()){
+        var c = snap.data();
+        sharedCfg.lotes = arr(c.lotes);
+        sharedCfg.trabajadores = arr(c.trabajadores);
+        sharedCfg.valorJornal = num(c.valorJornal);
+      } else if(isOwnerRole() && legacyCfg && arr(legacyCfg.lotes).length){
+        // Pasa los lotes de la versión de prueba a la configuración compartida
+        sharedCfg.lotes = arr(legacyCfg.lotes);
+        sharedCfg.trabajadores = arr(legacyCfg.trabajadores);
+        sharedCfg.valorJornal = num(legacyCfg.valorJornal);
+        legacyCfg = null;
+        saveSharedCfg(true);
+      }
+      if(focusInNewPanels()){ jor.deferred = true; return; }
+      renderPrivado();
+    }, function(){ setSyncStatus("off"); });
+  }
+  function saveSharedCfg(immediate){
+    if(!isOwnerRole() || !state.fincaId) return;
+    if(sharedCfgTimer) clearTimeout(sharedCfgTimer);
+    sharedCfgTimer = setTimeout(function(){
+      sharedCfgTimer = null;
+      setDoc(doc(firestore, "fincas", state.fincaId, "compartido", "config"), {
+        lotes: sharedCfg.lotes, trabajadores: sharedCfg.trabajadores, valorJornal: sharedCfg.valorJornal || 0
+      }).catch(function(){ setSyncStatus("off"); });
+    }, immediate ? 0 : 600);
+  }
+  function resetConfigs(){
+    if(sharedUnsub){ sharedUnsub(); sharedUnsub = null; }
+    privCfg = { sueldoMayordomo:0 };
+    sharedCfg = { lotes:[], trabajadores:[], valorJornal:0 };
+    legacyCfg = null;
+  }
+
+  // ---------------- filas con clave (no se reconstruyen al escribir) ----------------
+  function syncRows(tbody, items, build, update){
+    var existing = {};
+    Array.prototype.forEach.call(tbody.querySelectorAll("tr[data-id]"), function(tr){ existing[tr.getAttribute("data-id")] = tr; });
+    var seen = {};
+    items.forEach(function(it, idx){
+      seen[it.id] = true;
+      var tr = existing[it.id];
+      if(!tr){ tr = build(it); tr.setAttribute("data-id", it.id); }
+      if(tbody.children[idx] !== tr) tbody.insertBefore(tr, tbody.children[idx] || null);
+      update(tr, it);
+    });
+    Object.keys(existing).forEach(function(id){ if(!seen[id]) existing[id].remove(); });
+  }
+  var FUENTES = { jor:{ sync:function(){ return jor; }, lista:"labores" },
+                  ins:{ sync:function(){ return priv; }, lista:"insumos" },
+                  per:{ sync:function(){ return priv; }, lista:"pergamino" } };
+  function puedeModificar(kind, item){ return kind !== "jor" || puedeEditarLabor(item); }
+  function mutate(kind, id, fn, immediate){
+    var S = FUENTES[kind].sync(), item = findById(S.ensure()[FUENTES[kind].lista], id);
+    if(!item || !puedeModificar(kind, item)) return;
+    fn(item);
+    renderPrivado();
+    S.schedule(immediate);
+  }
+  function rmButton(kind, id){
+    var b = el("button", {cls:"rm-btn", type:"button", title:"Quitar", text:"×"});
+    b.addEventListener("click", function(){
+      var S = FUENTES[kind].sync(), d = S.ensure(), lista = FUENTES[kind].lista, key = kind + ":" + id;
+      var item = findById(d[lista], id);
+      if(!item || !puedeModificar(kind, item)) return;
+      if(removeKey === key){
+        d[lista] = d[lista].filter(function(x){ return x.id !== id; });
+        removeKey = null;
+        renderPrivado();
+        S.schedule(true);
+      } else {
+        removeKey = key;
+        renderPrivado();
+        setTimeout(function(){ if(removeKey === key){ removeKey = null; renderPrivado(); } }, 3000);
+      }
+    });
+    return b;
+  }
+  function updateRm(b, kind, id){
+    var on = removeKey === kind + ":" + id;
+    b.classList.toggle("confirm", on);
+    b.textContent = on ? "✓" : "×";
+    b.title = on ? "Toca otra vez para confirmar" : "Quitar";
+  }
+  function sortByFecha(list){ return list.slice().sort(function(a,b){ return (a.fecha||"").localeCompare(b.fecha||""); }); }
+
+  // ---------------- registro diario de labores (jornales y contratos) ----------------
+  function puedeRegistrarLabores(){ return isOwnerRole() || (isMayordomoRole() && isCurrentWeek()); }
+  function puedeEditarLabor(x){
+    if(isOwnerRole()) return true;
+    if(!isMayordomoRole() || !isCurrentWeek()) return false;
+    return esContrato(x) || x.fecha === todayYmd();
+  }
+  function fillDiaSelect(select, current){
+    var dates = weekDates(state.weekId);
+    fillOptions(select, dates.map(function(f){ return [f, diaLabel(f)]; }), dates.indexOf(current) !== -1 ? current : dates[0]);
+  }
+  function lotesOptions(){
+    var opts = sharedCfg.lotes.map(function(l){ return [l.id, l.nombre]; });
+    return opts.length ? opts : [["", "Sin lotes todavía"]];
+  }
+  function loteNombre(id, fallback){ var l = findById(sharedCfg.lotes, id); return l ? l.nombre : (fallback || ""); }
+  function recordarTrabajador(nombre){
+    if(!isOwnerRole()) return;
+    var k = nombreKey(nombre);
+    if(!k || sharedCfg.trabajadores.some(function(n){ return nombreKey(n) === k; })) return;
+    sharedCfg.trabajadores = sharedCfg.trabajadores.concat([nombre]).slice(-80);
+    saveSharedCfg();
+  }
+  function jornadaValue(x){ return esContrato(x) ? "contrato" : String(Number(x.jornada) || 1); }
+  // Formulario: con "Contrato" el día queda en "Toda la semana"; el mayordomo solo registra hoy
+  function updateJorForm(){
+    var contrato = $("jorJornada").value === "contrato", may = isMayordomoRole(), hoy = todayYmd();
+    if(contrato) fillOptions($("jorDia"), [["semana", "Toda la semana"]], "semana");
+    else if(may) fillOptions($("jorDia"), [[hoy, "Hoy, " + diaLabel(hoy)]], hoy);
+    else fillDiaSelect($("jorDia"), jorDiaElegido || defaultFecha());
+    var bloqueado = !puedeRegistrarLabores();
+    $("jorDia").disabled = contrato || may || bloqueado;
+    ["jorNombre","jorLote","jorLabor","jorJornada","jorValor","jorTerminada","jorNota","jorAddBtn"].forEach(function(id){ $(id).disabled = bloqueado; });
+    $("jorMayHint").hidden = !may;
+    $("jorMayHint").textContent = bloqueado
+      ? "Esta semana ya no se puede modificar. Vuelve a la semana actual con el botón Hoy."
+      : "Solo puedes registrar y corregir las labores de hoy y los contratos de esta semana. Los pagos los marca el dueño.";
+  }
+
+  function buildJorRow(it){
+    var id = it.id, tr = el("tr"), r = {};
+    r.dia = el("select", {cls:"cell-input", "aria-label":"Día"});
+    r.dia.addEventListener("change", function(){ mutate("jor", id, function(x){ if(!esContrato(x)) x.fecha = r.dia.value; }); });
+    r.name = el("input", {cls:"cell-input name", type:"text", maxLength:60, "aria-label":"Trabajador"});
+    r.name.setAttribute("list", "jorNombres");
+    r.name.addEventListener("change", function(){
+      var n = r.name.value.trim() || "Sin nombre";
+      mutate("jor", id, function(x){ x.trabajador = n; });
+      recordarTrabajador(n);
+    });
+    r.lote = el("select", {cls:"cell-input", "aria-label":"Lote"});
+    r.lote.addEventListener("change", function(){
+      mutate("jor", id, function(x){ x.loteId = r.lote.value; x.loteNombre = loteNombre(r.lote.value, x.loteNombre); });
+    });
+    r.labor = el("select", {cls:"cell-input", "aria-label":"Labor"});
+    r.labor.addEventListener("change", function(){ mutate("jor", id, function(x){ x.labor = r.labor.value; }); });
+    r.jornada = el("select", {cls:"cell-input", "aria-label":"Jornada"});
+    fillOptions(r.jornada, [["1","Día completo"],["0.5","Medio día"],["contrato","Contrato"]], jornadaValue(it));
+    r.jornada.addEventListener("change", function(){
+      mutate("jor", id, function(x){
+        var eraContrato = esContrato(x);
+        x.jornada = r.jornada.value === "contrato" ? "contrato" : Number(r.jornada.value);
+        // Un contrato cubre toda la semana: se guarda con el lunes y el día queda bloqueado
+        if(esContrato(x) && !eraContrato) x.fecha = state.weekId;
+        if(!esContrato(x) && eraContrato) x.fecha = isMayordomoRole() ? todayYmd() : defaultFecha();
+      }, true);
+    });
+    r.valor = el("input", {cls:"cell-input num", type:"number", min:"0", step:"1000", inputMode:"numeric", "aria-label":"Valor"});
+    r.valor.addEventListener("change", function(){ mutate("jor", id, function(x){ x.valor = num(r.valor.value); }); });
+    r.total = el("td", {cls:"money"});
+    r.term = el("select", {cls:"cell-input", "aria-label":"¿Terminó la labor en todo el lote?"});
+    fillOptions(r.term, [["no","No"],["si","Sí"]], it.terminada ? "si" : "no");
+    r.term.addEventListener("change", function(){ mutate("jor", id, function(x){ x.terminada = r.term.value === "si"; }, true); });
+    r.nota = el("input", {cls:"cell-input", type:"text", maxLength:200, placeholder:"Qué se hizo", "aria-label":"Nota del trabajo"});
+    r.nota.addEventListener("change", function(){ mutate("jor", id, function(x){ x.nota = r.nota.value.trim(); }); });
+    r.rm = rmButton("jor", id);
+    tr.appendChild(el("td", null, [r.dia]));
+    tr.appendChild(el("td", {cls:"name-col"}, [r.name]));
+    tr.appendChild(el("td", null, [r.lote]));
+    tr.appendChild(el("td", null, [r.labor]));
+    tr.appendChild(el("td", null, [r.jornada]));
+    tr.appendChild(el("td", null, [r.valor]));
+    tr.appendChild(r.total);
+    tr.appendChild(el("td", null, [r.term]));
+    tr.appendChild(el("td", {cls:"name-col"}, [r.nota]));
+    tr.appendChild(el("td", {cls:"remove-col"}, [r.rm]));
+    tr._r = r;
+    return tr;
+  }
+  function updateJorRow(tr, it){
+    var r = tr._r, a = document.activeElement, editable = puedeEditarLabor(it);
+    if(a !== r.dia){
+      if(esContrato(it)) fillOptions(r.dia, [["semana", "Toda la semana"]], "semana");
+      else fillDiaSelect(r.dia, it.fecha);
+    }
+    setVal(r.name, it.trabajador);
+    if(a !== r.lote){
+      var opts = lotesOptions();
+      // Si el lote ya no existe en la lista, se muestra con el nombre guardado
+      if(it.loteId && !findById(sharedCfg.lotes, it.loteId)) opts = opts.concat([[it.loteId, it.loteNombre || "Lote eliminado"]]);
+      fillOptions(r.lote, opts, it.loteId || opts[0][0]);
+    }
+    if(a !== r.labor) fillOptions(r.labor, LABORES, it.labor);
+    if(a !== r.jornada) r.jornada.value = jornadaValue(it);
+    setVal(r.valor, it.valor, true);
+    r.valor.placeholder = esContrato(it) ? "Valor pactado" : "Por día";
+    r.total.textContent = fmtCOP.format(laborTotal(it));
+    if(a !== r.term) r.term.value = it.terminada ? "si" : "no";
+    r.term.classList.toggle("si", !!it.terminada);
+    setVal(r.nota, it.nota);
+    // El día de un contrato no se cambia, y el mayordomo no mueve labores de día
+    r.dia.disabled = esContrato(it) || !editable || isMayordomoRole();
+    [r.name, r.lote, r.labor, r.jornada, r.valor, r.term, r.nota, r.rm].forEach(function(n){ n.disabled = !editable; });
+    updateRm(r.rm, "jor", it.id);
+  }
+  function pagosPorTrabajador(labores){
+    var map = {}, orden = [];
+    labores.forEach(function(x){
+      var k = nombreKey(x.trabajador);
+      if(!map[k]){ map[k] = { key:k, nombre:x.trabajador || "Sin nombre", jornales:0, contratos:0, total:0 }; orden.push(k); }
+      if(esContrato(x)) map[k].contratos += num(x.valor); else map[k].jornales += laborJornales(x);
+      map[k].total += laborTotal(x);
+    });
+    return orden.map(function(k){ return map[k]; }).sort(function(a,b){ return a.nombre.localeCompare(b.nombre, "es"); });
+  }
+  function renderPagosJornales(j, lista){
+    $("jorPagoTable").hidden = lista.length === 0;
+    $("jorPagoEmpty").hidden = lista.length !== 0;
+    syncRows($("jorPagoBody"), lista.map(function(w){ return { id:"w-" + w.key, w:w }; }), function(){
+      var tr = el("tr"), r = {};
+      r.nombre = el("td", {cls:"name-col"});
+      r.jor = el("td", {cls:"num"});
+      r.con = el("td", {cls:"money"});
+      r.total = el("td", {cls:"money"});
+      r.pag = el("input", {type:"checkbox", "aria-label":"Pagado"});
+      r.pag.addEventListener("change", function(){
+        if(!isOwnerRole()) return;
+        jor.ensure().pagosJornales[tr._key] = r.pag.checked;
+        renderPrivado();
+        jor.schedule(true);
+      });
+      [r.nombre, r.jor, r.con, r.total].forEach(function(td){ tr.appendChild(td); });
+      tr.appendChild(el("td", null, [r.pag]));
+      tr._r = r;
+      return tr;
+    }, function(tr, item){
+      var r = tr._r, w = item.w;
+      tr._key = w.key;
+      r.nombre.textContent = w.nombre;
+      r.jor.textContent = fmtNum(w.jornales);
+      r.con.textContent = w.contratos ? fmtCOP.format(w.contratos) : "—";
+      r.total.textContent = fmtCOP.format(w.total);
+      r.pag.checked = !!j.pagosJornales[w.key];
+      r.pag.disabled = !isOwnerRole();
+    });
+  }
+  function ordenLabor(x){ return (esContrato(x) ? "0" : "1") + (x.fecha || ""); }
+  function renderJornales(){
+    var j = jor.view(), rows = j.labores;
+    var lista = pagosPorTrabajador(rows);
+    var total = rows.reduce(function(s,x){ return s + laborTotal(x); }, 0);
+    var pagados = lista.filter(function(w){ return j.pagosJornales[w.key]; }).length;
+    $("jorTotalDias").textContent = fmtNum(rows.reduce(function(s,x){ return s + laborJornales(x); }, 0));
+    $("jorTrabajadores").textContent = lista.length + (lista.length === 1 ? " trabajador" : " trabajadores");
+    $("jorTotalPago").textContent = fmtCOP.format(total);
+    $("jorPagados").textContent = pagados + " de " + lista.length;
+    $("jorTable").hidden = rows.length === 0;
+    $("jorEmpty").hidden = rows.length !== 0;
+    // Los contratos (toda la semana) van primero; luego las labores por día
+    var ordenadas = rows.slice().sort(function(a,b){
+      return ordenLabor(a).localeCompare(ordenLabor(b)) || nombreKey(a.trabajador).localeCompare(nombreKey(b.trabajador));
+    });
+    syncRows($("jorBody"), ordenadas, buildJorRow, updateJorRow);
+    renderPagosJornales(j, lista);
+    // Formulario: lotes, trabajadores conocidos y valor del jornal
+    if(document.activeElement !== $("jorLote")){
+      var sel = $("jorLote").value, opts = lotesOptions();
+      fillOptions($("jorLote"), opts, findById(sharedCfg.lotes, sel) ? sel : opts[0][0]);
+    }
+    var nombres = {}, dl = $("jorNombres");
+    dl.innerHTML = "";
+    sharedCfg.trabajadores.concat(rows.map(function(x){ return x.trabajador; })).forEach(function(n){
+      var k = nombreKey(n);
+      if(k && !nombres[k]){ nombres[k] = true; dl.appendChild(el("option", {value:n})); }
+    });
+    if(!$("jorValor").value && $("jorJornada").value !== "contrato" && sharedCfg.valorJornal){
+      setVal($("jorValor"), sharedCfg.valorJornal);
+    }
+    if(isOwnerRole()) renderLotes();
+  }
+  function addLabor(){
+    if(!puedeRegistrarLabores()) return;
+    var nombre = $("jorNombre").value.trim();
+    if(!nombre){ $("jorNombre").focus(); return; }
+    var jornada = $("jorJornada").value, valor = num($("jorValor").value), loteId = $("jorLote").value;
+    var fecha = jornada === "contrato" ? state.weekId : (isMayordomoRole() ? todayYmd() : ($("jorDia").value || defaultFecha()));
+    jor.ensure().labores.push({
+      id: genId(), fecha: fecha, trabajador: nombre, loteId: loteId, loteNombre: loteNombre(loteId, ""),
+      labor: $("jorLabor").value, jornada: jornada === "contrato" ? "contrato" : Number(jornada),
+      valor: valor, terminada: $("jorTerminada").value === "si", nota: $("jorNota").value.trim()
+    });
+    recordarTrabajador(nombre);
+    if(isOwnerRole() && jornada !== "contrato" && valor > 0 && valor !== sharedCfg.valorJornal){ sharedCfg.valorJornal = valor; saveSharedCfg(); }
+    // Se conservan día, lote, labor y valor para registrar rápido a otro trabajador en la misma labor
+    $("jorNombre").value = ""; $("jorNota").value = ""; $("jorTerminada").value = "no";
+    $("jorNombre").focus();
+    renderPrivado();
+    jor.schedule(true);
+  }
+
+  // ---------------- lotes de la finca (solo el dueño los cambia) ----------------
+  function renderLotes(){
+    var lotes = sharedCfg.lotes, ha = lotes.reduce(function(s,l){ return s + num(l.ha); }, 0);
+    $("lotesMeta").textContent = lotes.length ? lotes.length + (lotes.length === 1 ? " lote · " : " lotes · ") + fmtNum(ha) + " ha" : "sin lotes";
+    $("lotesTable").hidden = lotes.length === 0;
+    $("lotesEmpty").hidden = lotes.length !== 0;
+    syncRows($("lotesBody"), lotes, function(it){
+      var id = it.id, tr = el("tr"), r = {};
+      r.nombre = el("input", {cls:"cell-input name", type:"text", maxLength:60, "aria-label":"Nombre del lote"});
+      r.nombre.addEventListener("change", function(){
+        var l = findById(sharedCfg.lotes, id); if(!l) return;
+        l.nombre = r.nombre.value.trim() || l.nombre;
+        saveSharedCfg(); renderPrivado();
+      });
+      r.ha = el("input", {cls:"cell-input num", type:"number", min:"0", step:"0.1", inputMode:"decimal", "aria-label":"Hectáreas"});
+      r.ha.addEventListener("change", function(){
+        var l = findById(sharedCfg.lotes, id); if(!l) return;
+        l.ha = num(r.ha.value);
+        saveSharedCfg(); renderLotes();
+      });
+      r.rm = el("button", {cls:"rm-btn", type:"button", title:"Quitar lote", text:"×"});
+      r.rm.addEventListener("click", function(){
+        var key = "lote:" + id;
+        if(removeKey === key){
+          sharedCfg.lotes = sharedCfg.lotes.filter(function(l){ return l.id !== id; });
+          removeKey = null;
+          saveSharedCfg(true); renderPrivado();
+        } else {
+          removeKey = key; renderLotes();
+          setTimeout(function(){ if(removeKey === key){ removeKey = null; renderLotes(); } }, 3000);
+        }
+      });
+      tr.appendChild(el("td", {cls:"name-col"}, [r.nombre]));
+      tr.appendChild(el("td", null, [r.ha]));
+      tr.appendChild(el("td", {cls:"remove-col"}, [r.rm]));
+      tr._r = r;
+      return tr;
+    }, function(tr, it){
+      var r = tr._r, on = removeKey === "lote:" + it.id;
+      setVal(r.nombre, it.nombre);
+      setVal(r.ha, it.ha);
+      r.rm.classList.toggle("confirm", on);
+      r.rm.textContent = on ? "✓" : "×";
+    });
+  }
+  function addLote(nombre, ha){ sharedCfg.lotes = sharedCfg.lotes.concat([{ id: genId(), nombre: nombre, ha: ha }]); }
+  function cargarLotesDiviso(){
+    if(!isOwnerRole() || sharedCfg.lotes.length) return;
+    LOTES_DIVISO.forEach(function(l){ addLote(l.nombre, l.ha); });
+    saveSharedCfg(true);
+    renderPrivado();
+  }
+
+  // ---------------- insumos y facturas ----------------
+  function buildInsRow(it){
+    var id = it.id, tr = el("tr"), r = {};
+    r.fecha = el("input", {cls:"cell-input", type:"date", "aria-label":"Fecha"});
+    r.fecha.addEventListener("change", function(){ mutate("ins", id, function(x){ x.fecha = r.fecha.value || x.fecha; }); });
+    r.prov = el("input", {cls:"cell-input name", type:"text", maxLength:60, "aria-label":"Proveedor"});
+    r.prov.addEventListener("change", function(){ mutate("ins", id, function(x){ x.proveedor = r.prov.value.trim(); }); });
+    r.conc = el("input", {cls:"cell-input", type:"text", maxLength:80, "aria-label":"Concepto"});
+    r.conc.addEventListener("change", function(){ mutate("ins", id, function(x){ x.concepto = r.conc.value.trim(); }); });
+    r.cat = el("select", {cls:"cell-input", "aria-label":"Categoría"});
+    fillOptions(r.cat, CATEGORIAS, it.categoria);
+    r.cat.addEventListener("change", function(){ mutate("ins", id, function(x){ x.categoria = r.cat.value; }); });
+    r.valor = el("input", {cls:"cell-input num", type:"number", min:"0", step:"100", inputMode:"numeric", "aria-label":"Valor"});
+    r.valor.addEventListener("change", function(){ mutate("ins", id, function(x){ x.valor = num(r.valor.value); }); });
+    r.fact = el("input", {type:"checkbox", "aria-label":"Factura electrónica"});
+    r.fact.addEventListener("change", function(){ mutate("ins", id, function(x){ x.factura = r.fact.checked; }, true); });
+    r.rm = rmButton("ins", id);
+    [r.fecha, r.prov, r.conc, r.cat, r.valor, r.fact].forEach(function(n, i){
+      tr.appendChild(el("td", {cls: (i === 1 || i === 2) ? "name-col" : ""}, [n]));
+    });
+    tr.appendChild(el("td", {cls:"remove-col"}, [r.rm]));
+    tr._r = r;
+    return tr;
+  }
+  function updateInsRow(tr, it){
+    var r = tr._r;
+    setVal(r.fecha, it.fecha);
+    setVal(r.prov, it.proveedor);
+    setVal(r.conc, it.concepto);
+    if(document.activeElement !== r.cat) fillOptions(r.cat, CATEGORIAS, it.categoria);
+    setVal(r.valor, it.valor, true);
+    r.fact.checked = !!it.factura;
+    updateRm(r.rm, "ins", it.id);
+  }
+  function renderInsumos(){
+    var rows = priv.view().insumos, total = 0, con = 0;
+    rows.forEach(function(x){ total += num(x.valor); if(x.factura) con += num(x.valor); });
+    $("insTotal").textContent = fmtCOP.format(total);
+    $("insCount").textContent = rows.length + (rows.length === 1 ? " compra" : " compras");
+    $("insConFactura").textContent = fmtCOP.format(con);
+    $("insSinFactura").textContent = fmtCOP.format(total - con);
+    $("insTable").hidden = rows.length === 0;
+    $("insEmpty").hidden = rows.length !== 0;
+    syncRows($("insBody"), sortByFecha(rows), buildInsRow, updateInsRow);
+  }
+  function addInsumo(){
+    var concepto = $("insConcepto").value.trim(), valor = num($("insValor").value);
+    if(!concepto && !valor){ $("insConcepto").focus(); return; }
+    priv.ensure().insumos.push({
+      id:genId(), fecha:$("insFecha").value || defaultFecha(), proveedor:$("insProveedor").value.trim(),
+      concepto:concepto, categoria:$("insCategoria").value, valor:valor, factura:$("insFactura").checked
+    });
+    $("insProveedor").value = ""; $("insConcepto").value = ""; $("insValor").value = ""; $("insFactura").checked = false;
+    $("insProveedor").focus();
+    renderPrivado();
+    priv.schedule(true);
+  }
+
+  // ---------------- mayordomo ----------------
+  function renderMayordomo(){
+    var m = priv.view().mayordomo, base = privCfg.sueldoMayordomo;
+    setVal($("mayBase"), base, true);
+    setVal($("mayPago"), m.pago, true);
+    setVal($("mayOtros"), m.otros, true);
+    setVal($("mayNota"), m.nota);
+    $("mayUsarBase").textContent = base ? "Usar el sueldo base (" + fmtCOP.format(base) + ")" : "Guarda primero el sueldo base";
+    $("mayUsarBase").disabled = !base;
+    $("mayTotal").textContent = fmtCOP.format(num(m.pago) + num(m.otros));
+    $("mayPagado").checked = !!m.pagado;
+    $("mayPagadoLabel").innerHTML = m.pagado ? '<span class="badge good">Pagado</span>' : '<span class="badge warn">Pendiente</span>';
+  }
+  function cambiarMayordomo(fn, immediate){ fn(priv.ensure().mayordomo); renderPrivado(); priv.schedule(immediate); }
+
+  // ---------------- pergamino ----------------
+  function buildPerRow(it){
+    var id = it.id, venta = it.destino === "venta", tr = el("tr"), r = {};
+    function dash(){ return el("td", {cls:"muted", text:"—"}); }
+    r.fecha = el("input", {cls:"cell-input", type:"date", "aria-label":"Fecha"});
+    r.fecha.addEventListener("change", function(){ mutate("per", id, function(x){ x.fecha = r.fecha.value || x.fecha; }); });
+    tr.appendChild(el("td", null, [r.fecha]));
+    tr.appendChild(el("td", null, [el("span", {cls:"chip " + (venta ? "venta" : "tostion"), text: venta ? "Venta Almacafé" : "Tostión"})]));
+    r.kg = el("input", {cls:"cell-input num", type:"number", min:"0", step:"0.1", inputMode:"decimal", "aria-label":"Kg de pergamino"});
+    r.kg.addEventListener("change", function(){
+      mutate("per", id, function(x){ x.kg = num(r.kg.value); if(venta && !x.totalManual) x.total = Math.round(x.kg * num(x.precioKg)); });
+    });
+    tr.appendChild(el("td", null, [r.kg]));
+    if(venta){
+      r.precio = el("input", {cls:"cell-input num", type:"number", min:"0", step:"10", inputMode:"numeric", "aria-label":"Precio por kg"});
+      r.precio.addEventListener("change", function(){
+        mutate("per", id, function(x){ x.precioKg = num(r.precio.value); if(!x.totalManual) x.total = Math.round(num(x.kg) * x.precioKg); });
+      });
+      r.total = el("input", {cls:"cell-input num", type:"number", min:"0", step:"100", inputMode:"numeric", "aria-label":"Total factura"});
+      r.total.addEventListener("change", function(){ mutate("per", id, function(x){ x.total = num(r.total.value); x.totalManual = true; }); });
+      tr.appendChild(el("td", null, [r.precio]));
+      tr.appendChild(el("td", null, [r.total]));
+      tr.appendChild(dash());
+      tr.appendChild(dash());
+    } else {
+      tr.appendChild(dash());
+      tr.appendChild(dash());
+      r.tost = el("input", {cls:"cell-input num", type:"number", min:"0", step:"0.1", inputMode:"decimal", placeholder:"Opcional", "aria-label":"Kg tostados"});
+      r.tost.addEventListener("change", function(){ mutate("per", id, function(x){ x.kgTostado = num(r.tost.value); }); });
+      tr.appendChild(el("td", null, [r.tost]));
+      r.merma = el("td", {cls:"num"});
+      tr.appendChild(r.merma);
+    }
+    r.rm = rmButton("per", id);
+    tr.appendChild(el("td", {cls:"remove-col"}, [r.rm]));
+    tr._r = r;
+    return tr;
+  }
+  function updatePerRow(tr, it){
+    var r = tr._r;
+    setVal(r.fecha, it.fecha);
+    setVal(r.kg, it.kg, true);
+    if(r.precio){ setVal(r.precio, it.precioKg, true); setVal(r.total, it.total, true); }
+    if(r.tost){
+      setVal(r.tost, it.kgTostado, true);
+      r.merma.textContent = (num(it.kg) > 0 && num(it.kgTostado) > 0) ? fmtNum((1 - num(it.kgTostado) / num(it.kg)) * 100) + "%" : "—";
+    }
+    updateRm(r.rm, "per", it.id);
+  }
+  function renderPergamino(){
+    var rows = priv.view().pergamino, kgV = 0, copV = 0, kgT = 0, kgTost = 0;
+    rows.forEach(function(x){
+      if(x.destino === "venta"){ kgV += num(x.kg); copV += num(x.total); }
+      else { kgT += num(x.kg); kgTost += num(x.kgTostado); }
+    });
+    $("perVendidoKg").textContent = fmtNum(kgV) + " kg";
+    $("perVendidoCop").textContent = fmtCOP.format(copV);
+    $("perTostionKg").textContent = fmtNum(kgT) + " kg";
+    $("perTostadoKg").textContent = fmtNum(kgTost) + " kg tostados";
+    $("perPrecioCarga").textContent = kgV > 0 ? fmtCOP.format(copV / kgV * KG_CARGA) : "—";
+    $("perTable").hidden = rows.length === 0;
+    $("perEmpty").hidden = rows.length !== 0;
+    syncRows($("perBody"), sortByFecha(rows), buildPerRow, updatePerRow);
+  }
+  var perTotalTouched = false;
+  function updatePerForm(){
+    var venta = $("perDestino").value === "venta";
+    $("perPrecioWrap").hidden = !venta;
+    $("perTotalWrap").hidden = !venta;
+    $("perKgTostadoWrap").hidden = venta;
+  }
+  function perAutoTotal(){
+    if(perTotalTouched) return;
+    var t = num($("perKg").value) * num($("perPrecio").value);
+    $("perTotal").value = t ? Math.round(t) : "";
+  }
+  function addPergamino(){
+    var kg = num($("perKg").value);
+    if(!kg){ $("perKg").focus(); return; }
+    var destino = $("perDestino").value;
+    var item = { id:genId(), fecha:$("perFecha").value || defaultFecha(), destino:destino, kg:kg };
+    if(destino === "venta"){
+      item.precioKg = num($("perPrecio").value);
+      item.total = $("perTotal").value !== "" ? num($("perTotal").value) : Math.round(kg * item.precioKg);
+      item.totalManual = perTotalTouched;
+    } else {
+      item.kgTostado = num($("perKgTostado").value);
+    }
+    priv.ensure().pergamino.push(item);
+    $("perKg").value = ""; $("perTotal").value = ""; $("perKgTostado").value = "";
+    perTotalTouched = false;
+    $("perKg").focus();
+    renderPrivado();
+    priv.schedule(true);
+  }
+
+  // Pinta lo que le corresponde a cada rol
+  function renderPrivado(){
+    if(isOwnerRole()){ renderJornales(); renderInsumos(); renderMayordomo(); renderPergamino(); }
+    else if(isMayordomoRole()){ renderJornales(); }
+  }
+  // Al cambiar de semana: fechas por defecto de los formularios
+  function resetFormsForWeek(){
+    removeKey = null;
+    $("insFecha").value = defaultFecha();
+    $("perFecha").value = defaultFecha();
+    jorDiaElegido = defaultFecha();
+    updateJorForm();
+  }
+  function subscribeSecciones(weekId){
+    resetFormsForWeek();
+    jor.subscribe(weekId, renderPrivado);
+    if(isOwnerRole()) priv.subscribe(weekId, renderPrivado);
+    renderPrivado();
+  }
+
+  // ---------------- resumen ----------------
+  function blankTotals(){ return { recKg:0, rec:0, jor:0, ins:0, may:0, kgVenta:0, ingresoVenta:0, kgTostion:0, kgTostionMedida:0, kgTostado:0 }; }
+  function weekTotals(s, j, p){
+    var t = blankTotals();
+    if(s){
+      (s.cogedores || []).forEach(function(c){ if(c && c.kg) t.recKg += totalKgOf(c); });
+      t.rec = t.recKg * num(s.precioKg);
+    }
+    if(j) arr(j.labores).forEach(function(x){ t.jor += laborTotal(x); });
+    if(p){
+      arr(p.insumos).forEach(function(x){ t.ins += num(x.valor); });
+      if(p.mayordomo) t.may = num(p.mayordomo.pago) + num(p.mayordomo.otros);
+      arr(p.pergamino).forEach(function(x){
+        if(x.destino === "venta"){ t.kgVenta += num(x.kg); t.ingresoVenta += num(x.total); }
+        else {
+          t.kgTostion += num(x.kg);
+          if(num(x.kgTostado) > 0){ t.kgTostionMedida += num(x.kg); t.kgTostado += num(x.kgTostado); }
+        }
+      });
+    }
+    return t;
+  }
+  function costos(c){ return c.rec + c.jor + c.ins + c.may; }
+  function cargas(c){ return (c.kgVenta + c.kgTostion) / KG_CARGA; }
+  // Arma la tabla del resumen (semana, mes y año de la semana elegida); la usan la pestaña y el informe PDF
+  function buildResumen(data){
+    var sem = data.sem, jr = data.jr, pv = data.pv;
+    var wk = state.weekId, mes = wk.slice(0,7), anio = wk.slice(0,4), monday = parseYmd(wk);
+    var cols = [blankTotals(), blankTotals(), blankTotals()];
+    // Jornales por lote: todos los lotes de la finca, más los que aparezcan en registros viejos
+    var porLote = {}, ordenLotes = [];
+    function loteSlot(key, nombre){
+      if(!porLote[key]){ porLote[key] = { nombre:nombre, v:[0,0,0] }; ordenLotes.push(key); }
+      return porLote[key];
+    }
+    sharedCfg.lotes.forEach(function(l){ loteSlot(l.id, l.nombre + (num(l.ha) ? " (" + fmtNum(num(l.ha)) + " ha)" : "")); });
+    var ids = {};
+    Object.keys(sem).concat(Object.keys(jr), Object.keys(pv)).forEach(function(id){ ids[id] = true; });
+    Object.keys(ids).forEach(function(id){
+      var t = weekTotals(sem[id], jr[id], pv[id]);
+      var match = [id === wk, id.slice(0,7) === mes, id.slice(0,4) === anio];
+      match.forEach(function(m, i){ if(m) Object.keys(t).forEach(function(k){ cols[i][k] += t[k]; }); });
+      arr(jr[id] && jr[id].labores).forEach(function(x){
+        var slot = x.loteId ? loteSlot(x.loteId, loteNombre(x.loteId, x.loteNombre) || "Lote eliminado") : loteSlot("_sin", "Sin lote");
+        match.forEach(function(m, i){ if(m) slot.v[i] += laborTotal(x); });
+      });
+    });
+    var cop = function(f){ return function(c){ return fmtCOP.format(f(c)); }; };
+    var defs = [
+      ["group", "Costos de la finca"],
+      ["", "Recolección (pago a cogedores)", cop(function(c){ return c.rec; })],
+      ["", "Jornales y contratos", cop(function(c){ return c.jor; })],
+      ["", "Insumos y facturas", cop(function(c){ return c.ins; })],
+      ["", "Mayordomo", cop(function(c){ return c.may; })],
+      ["total", "Total costos", cop(costos)],
+      ["group", "Pergamino que salió de la finca"],
+      ["", "Vendido a Almacafé", function(c){ return fmtNum(c.kgVenta) + " kg"; }],
+      ["", "Llevado a tostión", function(c){ return fmtNum(c.kgTostion) + " kg"; }],
+      ["", "Cargas (125 kg)", function(c){ return fmtNum(cargas(c)); }],
+      ["key", "Costo de producción por carga", function(c){ return cargas(c) > 0 ? fmtCOP.format(costos(c) / cargas(c)) : "—"; }],
+      ["group", "Ventas y rendimiento"],
+      ["", "Ingreso por pergamino vendido", cop(function(c){ return c.ingresoVenta; })],
+      ["", "Precio promedio por carga vendida", function(c){ return c.kgVenta > 0 ? fmtCOP.format(c.ingresoVenta / c.kgVenta * KG_CARGA) : "—"; }],
+      ["", "Merma de pergamino a tostado", function(c){ return c.kgTostionMedida > 0 ? fmtNum((1 - c.kgTostado / c.kgTostionMedida) * 100) + "%" : "—"; }],
+      ["", "Café recolectado por cogedores", function(c){ return fmtNum(c.recKg) + " kg"; }]
+    ];
+    var table = defs.map(function(d){
+      return d[0] === "group" ? { type:"group", label:d[1] } : { type:d[0], label:d[1], values: cols.map(d[2]) };
+    });
+    if(ordenLotes.length){
+      table.push({ type:"group", label:"Jornales y contratos por lote" });
+      ordenLotes.forEach(function(key){
+        table.push({ type:"", label:porLote[key].nombre, values: porLote[key].v.map(function(v){ return fmtCOP.format(v); }) });
+      });
+    }
+    return { heads: [weekLabel(monday), MESES_LARGOS[monday.getMonth()] + " " + anio, "Año " + anio], table: table };
+  }
+  function renderResumen(data){
+    var R = buildResumen(data);
+    $("resHeadSemana").textContent = R.heads[0];
+    $("resHeadMes").textContent = R.heads[1];
+    $("resHeadAnio").textContent = R.heads[2];
+    var body = $("resBody");
+    body.innerHTML = "";
+    R.table.forEach(function(row){
+      var tr = el("tr", {cls: row.type});
+      if(row.type === "group"){ tr.appendChild(el("td", {colSpan:4, text:row.label})); }
+      else {
+        tr.appendChild(el("td", {text:row.label}));
+        row.values.forEach(function(v){ tr.appendChild(el("td", {text:v})); });
+      }
+      body.appendChild(tr);
+    });
+  }
+  // Lee las tres fuentes por separado: si una falla, el resumen se calcula con las demás y avisa cuál faltó
+  function fetchResumenData(){
+    var semana = /^\d{4}-\d{2}-\d{2}$/;
+    var fuentes = [["semanas", "recolección"], ["jornales", "jornales"], ["privado", "insumos, mayordomo y pergamino"]];
+    var fallos = [];
+    return Promise.all(fuentes.map(function(f){
+      return getDocs(collection(firestore, "fincas", state.fincaId, f[0])).catch(function(){ fallos.push(f[1]); return null; });
+    })).then(function(res){
+      var sem = {}, jr = {}, pv = {};
+      if(res[0]) res[0].forEach(function(s){ sem[s.id] = s.data(); });
+      if(res[1]) res[1].forEach(function(s){ jr[s.id] = s.data(); });
+      if(res[2]) res[2].forEach(function(s){ if(semana.test(s.id)) pv[s.id] = s.data(); });
+      // Lo más reciente de esta pantalla
+      if(state.doc) sem[state.weekId] = state.doc;
+      if(jor.doc && jor.weekId === state.weekId) jr[state.weekId] = jor.doc;
+      if(priv.doc && priv.weekId === state.weekId) pv[state.weekId] = priv.doc;
+      return { sem:sem, jr:jr, pv:pv, fallos:fallos };
+    });
+  }
+  var resumenLoading = false;
+  function loadResumen(){
+    if(!isOwnerRole() || !state.fincaId || resumenLoading) return;
+    resumenLoading = true;
+    $("resStatus").textContent = "calculando…";
+    fetchResumenData().then(function(data){
+      renderResumen(data);
+      $("resStatus").textContent = "actualizado " + new Date().toLocaleTimeString("es-CO", {hour:"2-digit", minute:"2-digit"}) +
+        (data.fallos.length ? " · no se pudo leer: " + data.fallos.join(", ") + " (esas filas quedan incompletas)" : "");
+    }).catch(function(){
+      $("resStatus").textContent = "No se pudo calcular. Revisa la conexión y toca Actualizar.";
+    }).then(function(){ resumenLoading = false; });
+  }
+
+  // ---------------- informe PDF del dueño: resumen general + cada sección de la semana ----------------
+  function exportOwnerPDF(){
+    if(!isOwnerRole() || !state.fincaId) return;
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if(!jsPDFCtor){ alert("No se pudo cargar el generador de PDF. Revisa tu conexión e inténtalo de nuevo."); return; }
+    var btn = $("pdfOwnerBtn");
+    btn.disabled = true; btn.textContent = "Preparando informe…";
+    fetchResumenData().then(function(data){
+      var R = buildResumen(data);
+      var j = jor.view(), p = priv.view(), d = state.doc || blankWeekDoc();
+      var pdf = new jsPDFCtor({ unit:"pt", format:"a4", orientation:"landscape" });
+      var pageH = pdf.internal.pageSize.getHeight();
+      var CAFE = [78, 53, 36], ARENA = [234, 223, 198], TENUE = [122, 106, 82];
+      var y = 44;
+
+      pdf.setFont("helvetica", "bold"); pdf.setFontSize(17);
+      pdf.text("Informe de la finca: " + (state.farmName || "Finca"), 40, y);
+      pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
+      pdf.setTextColor(TENUE[0], TENUE[1], TENUE[2]);
+      pdf.text("Semana " + weekLabel(parseYmd(state.weekId)) + "  ·  generado el " +
+        new Date().toLocaleDateString("es-CO", {day:"numeric", month:"long", year:"numeric"}) + "  ·  documento del dueño", 40, y + 16);
+      pdf.setTextColor(20, 20, 19);
+      y += 30;
+
+      function section(title, subtitle){
+        if(pdf.lastAutoTable) y = pdf.lastAutoTable.finalY + 28;
+        if(y > pageH - 90){ pdf.addPage(); y = 44; }
+        pdf.setFont("helvetica", "bold"); pdf.setFontSize(13);
+        pdf.text(title, 40, y);
+        if(subtitle){
+          pdf.setFont("helvetica", "normal"); pdf.setFontSize(9);
+          pdf.setTextColor(TENUE[0], TENUE[1], TENUE[2]);
+          pdf.text(subtitle, 40, y + 13);
+          pdf.setTextColor(20, 20, 19);
+          y += 13;
+        }
+        y += 8;
+      }
+      function table(head, body, extra){
+        var opts = { head:[head], body:body, startY:y, margin:{left:40, right:40},
+          styles:{ fontSize:8.5, cellPadding:4, overflow:"linebreak" }, headStyles:{ fillColor:CAFE } };
+        Object.keys(extra || {}).forEach(function(k){ opts[k] = extra[k]; });
+        pdf.autoTable(opts);
+      }
+      function vacio(cols){ return [[{ content:"Sin registros esta semana", colSpan:cols, styles:{ textColor:TENUE, fontStyle:"italic" } }]]; }
+
+      // 1. Resumen general
+      section("Resumen general", "Cada semana cuenta en el mes y el año de su lunes. El costo por carga usa el pergamino que salió de la finca.");
+      var tipos = R.table.map(function(r){ return r.type; });
+      table(["Concepto"].concat(R.heads), R.table.map(function(r){
+        return r.type === "group" ? [{ content:r.label, colSpan:4 }] : [r.label].concat(r.values);
+      }), {
+        columnStyles:{ 1:{halign:"right"}, 2:{halign:"right"}, 3:{halign:"right"} },
+        didParseCell:function(c){
+          if(c.section !== "body") return;
+          var t = tipos[c.row.index];
+          if(t === "group"){ c.cell.styles.fillColor = ARENA; c.cell.styles.fontStyle = "bold"; c.cell.styles.textColor = TENUE; }
+          if(t === "total" || t === "key") c.cell.styles.fontStyle = "bold";
+        }
+      });
+
+      // 2. Recolección
+      var cogedores = d.cogedores || [], precio = Number(d.precioKg) || 0;
+      var totalKg = cogedores.reduce(function(s,c){ return s + totalKgOf(c); }, 0);
+      section("Recolección", "Precio por kilo " + fmtCOP.format(precio) + "  ·  " + fmtKg(totalKg) + " kg  ·  total " +
+        fmtCOP.format(totalKg * precio) + "  ·  nómina " + (d.pagada ? "pagada" : "pendiente"));
+      table(["Cogedor","Lun","Mar","Mié","Jue","Vie","Sáb","Dom","Total kg","Pago"],
+        cogedores.length ? cogedores.map(function(c){
+          var t = totalKgOf(c);
+          return [c.nombre || "Sin nombre"].concat(DAYS.map(function(day){ return fmtKg(Number(c.kg[day.key])||0); })).concat([fmtKg(t), fmtCOP.format(t*precio)]);
+        }) : vacio(10));
+
+      // 3. Jornales y contratos
+      var labores = j.labores.slice().sort(function(a,b){ return ordenLabor(a).localeCompare(ordenLabor(b)); });
+      section("Jornales y contratos", fmtNum(labores.reduce(function(s,x){ return s + laborJornales(x); }, 0)) + " jornales  ·  total " +
+        fmtCOP.format(labores.reduce(function(s,x){ return s + laborTotal(x); }, 0)));
+      table(["Día","Trabajador","Lote","Labor","Jornada","Valor","Total","¿Terminó el lote?","Nota del trabajo"],
+        labores.length ? labores.map(function(x){
+          return [
+            esContrato(x) ? "Toda la semana" : diaLabel(x.fecha), x.trabajador || "",
+            loteNombre(x.loteId, x.loteNombre) || "Sin lote", x.labor || "",
+            esContrato(x) ? "Contrato" : (laborJornales(x) === 0.5 ? "Medio día" : "Día completo"),
+            fmtCOP.format(num(x.valor)), fmtCOP.format(laborTotal(x)), x.terminada ? "Sí" : "No", x.nota || ""
+          ];
+        }) : vacio(9), { columnStyles:{ 8:{ cellWidth:190 } } });
+      var pagos = pagosPorTrabajador(j.labores);
+      if(pagos.length){
+        y = pdf.lastAutoTable.finalY + 10;
+        table(["Pago por trabajador","Jornales","Contratos","Total","Pagado"], pagos.map(function(w){
+          return [w.nombre, fmtNum(w.jornales), w.contratos ? fmtCOP.format(w.contratos) : "—", fmtCOP.format(w.total), j.pagosJornales[w.key] ? "Sí" : "No"];
+        }), { tableWidth:460 });
+      }
+
+      // 4. Insumos y facturas
+      var insumos = sortByFecha(p.insumos), totIns = 0, conFac = 0;
+      insumos.forEach(function(x){ totIns += num(x.valor); if(x.factura) conFac += num(x.valor); });
+      section("Insumos y facturas", "Total " + fmtCOP.format(totIns) + "  ·  con factura electrónica " + fmtCOP.format(conFac) + "  ·  sin factura " + fmtCOP.format(totIns - conFac));
+      table(["Fecha","Proveedor","Concepto","Categoría","Valor","Factura"],
+        insumos.length ? insumos.map(function(x){
+          return [fechaCorta(x.fecha), x.proveedor || "", x.concepto || "", x.categoria || "", fmtCOP.format(num(x.valor)), x.factura ? "Sí" : "No"];
+        }) : vacio(6));
+
+      // 5. Mayordomo
+      var m = p.mayordomo;
+      section("Mayordomo");
+      table(["Sueldo base","Pago de la semana","Otros pagos","Total","Estado","Nota"], [[
+        fmtCOP.format(privCfg.sueldoMayordomo || 0), fmtCOP.format(num(m.pago)), fmtCOP.format(num(m.otros)),
+        fmtCOP.format(num(m.pago) + num(m.otros)), m.pagado ? "Pagado" : "Pendiente", m.nota || ""
+      ]]);
+
+      // 6. Pergamino
+      var perg = sortByFecha(p.pergamino), kgV = 0, copV = 0, kgT = 0;
+      perg.forEach(function(x){ if(x.destino === "venta"){ kgV += num(x.kg); copV += num(x.total); } else kgT += num(x.kg); });
+      section("Pergamino", "Vendido " + fmtNum(kgV) + " kg por " + fmtCOP.format(copV) + "  ·  a tostión " + fmtNum(kgT) + " kg");
+      table(["Fecha","Destino","Kg pergamino","Precio / kg","Total factura","Kg tostados","Merma"],
+        perg.length ? perg.map(function(x){
+          var venta = x.destino === "venta";
+          return [
+            fechaCorta(x.fecha), venta ? "Venta Almacafé" : "Tostión", fmtNum(num(x.kg)),
+            venta ? fmtCOP.format(num(x.precioKg)) : "—", venta ? fmtCOP.format(num(x.total)) : "—",
+            venta ? "—" : (num(x.kgTostado) ? fmtNum(num(x.kgTostado)) : "—"),
+            (!venta && num(x.kg) > 0 && num(x.kgTostado) > 0) ? fmtNum((1 - num(x.kgTostado)/num(x.kg)) * 100) + "%" : "—"
+          ];
+        }) : vacio(7));
+
+      var slug = (state.farmName || "finca").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      pdf.save("informe-" + slug + "-" + state.weekId + ".pdf");
+    }).catch(function(){
+      alert("No se pudo preparar el informe. Revisa la conexión e inténtalo de nuevo.");
+    }).then(function(){
+      btn.disabled = false; btn.textContent = "📊 Informe del dueño (PDF)";
+    });
+  }
+
+  // ---------------- pestañas ----------------
+  function tabPermitida(t){
+    if(isOwnerRole()) return TABS.indexOf(t) !== -1;
+    return isMayordomoRole() && TABS_MAYORDOMO.indexOf(t) !== -1;
+  }
+  function showTab(name){
+    if(!tabPermitida(name)) name = "recoleccion";
+    state.tab = name;
+    TABS.forEach(function(t){
+      $("panel-" + t).hidden = t !== name;
+      $("tab-" + t).setAttribute("aria-selected", t === name ? "true" : "false");
+    });
+    try{ localStorage.setItem("libro-tab", name); }catch(e){}
+    if(name === "resumen") loadResumen();
+  }
+  function setupTabs(){
+    $("ownerTabs").hidden = !state.role;
+    TABS.forEach(function(t){ $("tab-" + t).hidden = !tabPermitida(t); });
+    $("pdfOwnerBtn").hidden = !isOwnerRole();
+    $("lotesSection").hidden = !isOwnerRole();
+    var saved = null;
+    try{ saved = localStorage.getItem("libro-tab"); }catch(e){}
+    showTab(saved || "recoleccion");
+  }
+
+  // ---------------- eventos fijos de las secciones nuevas ----------------
+  Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function(b){
+    b.addEventListener("click", function(){ showTab(b.getAttribute("data-tab")); });
+  });
+  fillOptions($("jorLabor"), LABORES, LABORES[0]);
+  fillOptions($("insCategoria"), CATEGORIAS, CATEGORIAS[0]);
+  $("jorAddBtn").addEventListener("click", addLabor);
+  $("jorNota").addEventListener("keydown", function(e){ if(e.key === "Enter") addLabor(); });
+  $("jorJornada").addEventListener("change", function(){
+    var contrato = $("jorJornada").value === "contrato";
+    $("jorValorLabel").textContent = contrato ? "Valor del contrato" : "Valor del jornal";
+    $("jorValor").value = contrato ? "" : (sharedCfg.valorJornal || "");
+    updateJorForm();
+  });
+  $("jorDia").addEventListener("change", function(){ if($("jorDia").value !== "semana") jorDiaElegido = $("jorDia").value; });
+  $("lotesCargarDiviso").addEventListener("click", cargarLotesDiviso);
+  $("loteAddBtn").addEventListener("click", function(){
+    if(!isOwnerRole()) return;
+    var nombre = $("loteNombre").value.trim();
+    if(!nombre){ $("loteNombre").focus(); return; }
+    addLote(nombre, num($("loteHa").value));
+    $("loteNombre").value = ""; $("loteHa").value = "";
+    saveSharedCfg(true);
+    renderPrivado();
+  });
+  $("insAddBtn").addEventListener("click", addInsumo);
+  $("insValor").addEventListener("keydown", function(e){ if(e.key === "Enter") addInsumo(); });
+  $("mayBase").addEventListener("change", function(){ privCfg.sueldoMayordomo = num($("mayBase").value); savePrivCfg(); renderMayordomo(); });
+  $("mayPago").addEventListener("change", function(){ cambiarMayordomo(function(m){ m.pago = num($("mayPago").value); }); });
+  $("mayOtros").addEventListener("change", function(){ cambiarMayordomo(function(m){ m.otros = num($("mayOtros").value); }); });
+  $("mayNota").addEventListener("change", function(){ cambiarMayordomo(function(m){ m.nota = $("mayNota").value.trim(); }); });
+  $("mayPagado").addEventListener("change", function(){ cambiarMayordomo(function(m){ m.pagado = $("mayPagado").checked; }, true); });
+  $("mayUsarBase").addEventListener("click", function(){
+    if(!privCfg.sueldoMayordomo) return;
+    cambiarMayordomo(function(m){ m.pago = privCfg.sueldoMayordomo; }, true);
+  });
+  $("perDestino").addEventListener("change", updatePerForm);
+  $("perKg").addEventListener("input", perAutoTotal);
+  $("perPrecio").addEventListener("input", perAutoTotal);
+  $("perTotal").addEventListener("input", function(){ perTotalTouched = $("perTotal").value !== ""; });
+  $("perAddBtn").addEventListener("click", addPergamino);
+  $("resRefresh").addEventListener("click", loadResumen);
+  $("pdfOwnerBtn").addEventListener("click", exportOwnerPDF);
+  updatePerForm();
+  // Si se cierra o se oculta la página, guarda lo pendiente
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState !== "hidden") return;
+    if(state.saveTimer){ clearTimeout(state.saveTimer); state.saveTimer = null; persist(); }
+    if(jor.timer) jor.persist();
+    if(priv.timer) priv.persist();
+  });
 
   // ---------------- auth ----------------
   function showApp(){
@@ -959,12 +2349,26 @@
     });
   });
 
+  // Al cerrar sesión se recarga la página: no queda nada del usuario anterior en pantalla ni en memoria
   document.getElementById("logoutBtn").addEventListener("click", function(){
-    signOut(auth);
+    signOut(auth).then(function(){ location.reload(); }, function(){ location.reload(); });
   });
+
+  // Borra de la pantalla los datos de la sesión anterior (por si cambia el usuario sin recargar)
+  function limpiarPantalla(){
+    state.doc = null;
+    render();
+    renderJornales(); renderInsumos(); renderMayordomo(); renderPergamino(); renderLotes();
+    $("resBody").innerHTML = "";
+    $("resStatus").textContent = "";
+  }
 
   onAuthStateChanged(auth, function(user){
     if(state.unsub){ state.unsub(); state.unsub = null; }
+    jor.stop();
+    priv.stop();
+    resetConfigs();
+    limpiarPantalla();
     if(!user){
       state.uid = null;
       state.fincaId = null;
@@ -992,7 +2396,12 @@
         state._seedPrice = cfg.precioKg || 0;
       }
     }).catch(function(){}).then(function(){
+      setupTabs();
       subscribeWeek(state.weekId);
+      return loadPrivCfg().then(function(){
+        subscribeShared();
+        subscribeSecciones(state.weekId);
+      });
     });
   });
 </script>

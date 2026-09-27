@@ -1,0 +1,71 @@
+rules_version = '2';
+
+// Copia de referencia de las reglas publicadas en la consola de Firebase
+// (Firestore → Reglas) el 2026-09-27. Este archivo no se publica solo: si se
+// cambia aquí, hay que pegarlo y publicarlo en la consola.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /mayordomos/{muid} {
+      allow read: if request.auth != null && request.auth.uid == muid;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.fincaId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.fincaId;
+    }
+
+    match /fincas/{fincaId} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == fincaId || request.auth.uid == resource.data.mayordomoUid);
+      allow create, update: if request.auth != null && request.auth.uid == fincaId;
+
+      match /semanas/{weekId} {
+        allow read: if request.auth != null &&
+          (request.auth.uid == fincaId ||
+           request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.mayordomoUid);
+
+        allow create, update: if request.auth != null && (
+          request.auth.uid == fincaId
+          ||
+          (
+            request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.mayordomoUid
+            &&
+            request.resource.data.precioKg ==
+              (resource != null ? resource.data.precioKg : get(/databases/$(database)/documents/fincas/$(fincaId)).data.precioKg)
+            &&
+            request.resource.data.pagada == (resource != null ? resource.data.pagada : false)
+          )
+        );
+      }
+
+      // Secciones privadas del dueño: insumos, pago del mayordomo, pergamino y resumen
+      match /privado/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == fincaId;
+      }
+
+      // Jornales y contratos: los usan el dueño y el mayordomo; el mayordomo no puede cambiar los pagos
+      match /jornales/{weekId} {
+        allow read: if request.auth != null &&
+          (request.auth.uid == fincaId ||
+           request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.mayordomoUid);
+        allow create, update: if request.auth != null && (
+          request.auth.uid == fincaId
+          ||
+          (
+            request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.mayordomoUid
+            &&
+            request.resource.data.get('pagosJornales', {}) ==
+              (resource != null ? resource.data.get('pagosJornales', {}) : {})
+          )
+        );
+      }
+
+      // Lotes, trabajadores y valor del jornal: los lee el mayordomo; solo el dueño los cambia
+      match /compartido/{docId} {
+        allow read: if request.auth != null &&
+          (request.auth.uid == fincaId ||
+           request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.mayordomoUid);
+        allow write: if request.auth != null && request.auth.uid == fincaId;
+      }
+    }
+  }
+}
