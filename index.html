@@ -406,6 +406,29 @@
       </div>
     </div>
   </section>
+
+  <!-- Lluvia del pluviómetro: la anota el mayordomo cada mañana (solo el día de hoy); el dueño corrige cualquier día -->
+  <section class="ledger" id="lluviaSection">
+    <h2>🌧️ Lluvia (pluviómetro)</h2>
+    <p class="lede">Milímetros que marca el pluviómetro de la finca cada mañana (la lluvia de las últimas 24 horas). Se anota todos los días, aunque esa semana no haya recolección. Si no llovió, se escribe 0.</p>
+    <div class="table-scroll">
+      <table id="lluviaTable">
+        <thead>
+          <tr>
+            <th class="name-col"></th>
+            <th data-day="lun">Lun</th><th data-day="mar">Mar</th><th data-day="mie">Mié</th><th data-day="jue">Jue</th><th data-day="vie">Vie</th><th data-day="sab">Sáb</th><th data-day="dom">Dom</th>
+            <th class="total-col">Total mm</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="lluviaRow">
+            <td class="name-col">Lluvia (mm)</td>
+            <td class="total-col num" id="lluviaTotal">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
   </div>
 
   <!-- ===== Jornales y contratos (dueño y mayordomo; el mayordomo solo registra hoy y no marca pagos) ===== -->
@@ -732,8 +755,62 @@
     });
   }
 
+  // ---------------- lluvia (pluviómetro) ----------------
+  // Se guarda en la misma semana: semanas/{lunes}.lluvia = {lun: mm, …}. Un día sin dato queda vacío
+  // (no es lo mismo que 0 mm): así Alfonsito distingue "no llovió" de "no se anotó".
+  function buildLluviaRow(){
+    var row = document.getElementById("lluviaRow");
+    var totalTd = document.getElementById("lluviaTotal");
+    DAYS.forEach(function(day){
+      var td = document.createElement("td");
+      td.className = "day-col";
+      td.setAttribute("data-day", day.key);
+      var input = document.createElement("input");
+      input.type = "number"; input.min = "0"; input.step = "0.1"; input.inputMode = "decimal";
+      input.placeholder = "—";
+      input.addEventListener("focus", function(){ state.focusField = "lluvia:" + day.key; });
+      input.addEventListener("blur", function(){ state.focusField = null; commitLluvia(day.key, input.value); });
+      input.addEventListener("keydown", function(e){ if(e.key === "Enter"){ input.blur(); } });
+      td.appendChild(input);
+      row.insertBefore(td, totalTd);
+    });
+  }
+  function renderLluvia(){
+    if(!document.querySelector("#lluviaRow td.day-col")) buildLluviaRow();
+    var lluvia = ((state.doc || {}).lluvia) || {};
+    var isMayordomo = state.role === "mayordomo";
+    var esSemanaActual = state.weekId === ymd(mondayOf(new Date()));
+    var tKey = esSemanaActual ? todayKey() : null;
+    var total = 0, hayDatos = false;
+    Array.prototype.forEach.call(document.querySelectorAll("#lluviaRow td.day-col"), function(td){
+      var key = td.getAttribute("data-day");
+      var input = td.querySelector("input");
+      var v = lluvia[key];
+      var tiene = v !== undefined && v !== null && v !== "";
+      if(tiene){ total += Number(v) || 0; hayDatos = true; }
+      if(!isFocused("lluvia:" + key)) input.value = tiene ? v : "";
+      input.disabled = !state.fincaId || (isMayordomo && !(esSemanaActual && key === tKey));
+      td.classList.toggle("today-col", key === tKey);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("#lluviaTable thead th[data-day]"), function(th){
+      th.classList.toggle("today-col", th.getAttribute("data-day") === tKey);
+    });
+    document.getElementById("lluviaTotal").textContent = hayDatos ? fmtKg(total) : "—";
+  }
+  function commitLluvia(dayKey, rawVal){
+    if(!mayordomoCanEditDay(dayKey)) return;
+    var d = ensureDoc();
+    d.lluvia = d.lluvia || {};
+    var v = parseFloat(rawVal);
+    if(rawVal === "" || !isFinite(v) || v < 0){ delete d.lluvia[dayKey]; }
+    else { d.lluvia[dayKey] = Math.round(v * 10) / 10; }
+    render();
+    scheduleSave();
+  }
+
   function render(){
     document.getElementById("weekLabel").textContent = weekLabel(parseYmd(state.weekId));
+    renderLluvia();
 
     var d = state.doc || blankWeekDoc();
     var cogedores = d.cogedores || [];
