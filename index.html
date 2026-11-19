@@ -322,6 +322,7 @@
       <button class="save-btn" id="saveBtn" type="button">💾 Guardar</button>
       <button class="today pdf-btn" id="pdfBtn" type="button">📄 PDF recolección</button>
       <button class="today pdf-btn" id="pdfOwnerBtn" type="button" hidden>📊 Informe del dueño (PDF)</button>
+      <button class="today pdf-btn" id="datosOwnerBtn" type="button" hidden title="Descarga todos los datos de la finca para Alfonsito, el agente de la finca">📥 Datos para Alfonsito</button>
       <button class="logout-btn" id="logoutBtn" type="button">Cerrar sesión</button>
       <span class="sync" id="syncStatus"><span class="dot" id="syncDot"></span><span id="syncText">conectando…</span></span>
     </div>
@@ -2031,6 +2032,41 @@
     }).then(function(){ resumenLoading = false; });
   }
 
+  // ---------------- datos para Alfonsito (agente de la finca): todo en un archivo, solo el dueño ----------------
+  // Mismo formato que scripts/leer-libro.ps1 de Alfonsito: el dueño deja el archivo en
+  // "alfonsito - finca/informes-libro/". Es respaldo de la lectura directa (cuenta de solo lectura).
+  function exportDatosAlfonsito(){
+    if(!isOwnerRole() || !state.fincaId) return;
+    var btn = $("datosOwnerBtn");
+    btn.disabled = true; btn.textContent = "Preparando datos…";
+    var colecciones = ["semanas", "jornales", "privado", "compartido"];
+    Promise.all([getDoc(doc(firestore, "fincas", state.fincaId))].concat(colecciones.map(function(c){
+      return getDocs(collection(firestore, "fincas", state.fincaId, c));
+    }))).then(function(res){
+      var hoy = new Date();
+      var dos = function(n){ return (n < 10 ? "0" : "") + n; };
+      var fecha = hoy.getFullYear() + "-" + dos(hoy.getMonth() + 1) + "-" + dos(hoy.getDate());
+      var datos = {
+        generado: fecha + " " + dos(hoy.getHours()) + ":" + dos(hoy.getMinutes()),
+        finca: res[0].exists() ? res[0].data() : {}
+      };
+      colecciones.forEach(function(c, i){
+        var docs = {};
+        res[i + 1].forEach(function(s){ docs[s.id] = s.data(); });
+        datos[c] = docs;
+      });
+      var blob = new Blob([JSON.stringify(datos, null, 2)], {type: "application/json"});
+      var url = URL.createObjectURL(blob);
+      var a = el("a", {href: url, download: fecha + " datos libro.json"});
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+    }).catch(function(){
+      alert("No se pudieron leer los datos. Revisa la conexión e inténtalo de nuevo.");
+    }).then(function(){
+      btn.disabled = false; btn.textContent = "📥 Datos para Alfonsito";
+    });
+  }
+
   // ---------------- informe PDF del dueño: resumen general + cada sección de la semana ----------------
   function exportOwnerPDF(){
     if(!isOwnerRole() || !state.fincaId) return;
@@ -2185,6 +2221,7 @@
     $("ownerTabs").hidden = !state.role;
     TABS.forEach(function(t){ $("tab-" + t).hidden = !tabPermitida(t); });
     $("pdfOwnerBtn").hidden = !isOwnerRole();
+    $("datosOwnerBtn").hidden = !isOwnerRole();
     $("lotesSection").hidden = !isOwnerRole();
     var saved = null;
     try{ saved = localStorage.getItem("libro-tab"); }catch(e){}
@@ -2234,6 +2271,7 @@
   $("perAddBtn").addEventListener("click", addPergamino);
   $("resRefresh").addEventListener("click", loadResumen);
   $("pdfOwnerBtn").addEventListener("click", exportOwnerPDF);
+  $("datosOwnerBtn").addEventListener("click", exportDatosAlfonsito);
   updatePerForm();
   // Si se cierra o se oculta la página, guarda lo pendiente
   document.addEventListener("visibilitychange", function(){
