@@ -1,11 +1,21 @@
 rules_version = '2';
 
 // Copia de referencia de las reglas publicadas en la consola de Firebase
-// (Firestore → Reglas) el 2026-09-27. Este archivo no se publica solo: si se
-// cambia aquí, hay que pegarlo y publicarlo en la consola.
+// (Firestore → Reglas). Este archivo no se publica solo: si se cambia aquí,
+// hay que pegarlo y publicarlo en la consola.
+// 2026-09-27: roles dueño y mayordomo.
+// 2026-11-19: lector de solo lectura (Alfonsito, agente de la finca, D-036/D-044).
+//   El dueño pone el uid del lector en fincas/{id}.lectorUid. El lector lee todo
+//   lo de esa finca y no escribe nada.
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ¿Quien hace la petición es el lector de solo lectura de esta finca?
+    function esLector(fincaId) {
+      return request.auth != null &&
+        request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.get('lectorUid', '');
+    }
 
     match /mayordomos/{muid} {
       allow read: if request.auth != null && request.auth.uid == muid;
@@ -15,13 +25,16 @@ service cloud.firestore {
 
     match /fincas/{fincaId} {
       allow read: if request.auth != null &&
-        (request.auth.uid == fincaId || request.auth.uid == resource.data.mayordomoUid);
+        (request.auth.uid == fincaId ||
+         request.auth.uid == resource.data.mayordomoUid ||
+         request.auth.uid == resource.data.get('lectorUid', ''));
       allow create, update: if request.auth != null && request.auth.uid == fincaId;
 
       match /semanas/{weekId} {
         allow read: if request.auth != null &&
           (request.auth.uid == fincaId ||
-           request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.mayordomoUid);
+           request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.mayordomoUid ||
+           esLector(fincaId));
 
         allow create, update: if request.auth != null && (
           request.auth.uid == fincaId
@@ -37,16 +50,19 @@ service cloud.firestore {
         );
       }
 
-      // Secciones privadas del dueño: insumos, pago del mayordomo, pergamino y resumen
+      // Secciones privadas del dueño: insumos, pago del mayordomo, pergamino y resumen.
+      // El lector las lee (los informes van solo al dueño); nunca escribe.
       match /privado/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == fincaId;
+        allow read: if request.auth != null && (request.auth.uid == fincaId || esLector(fincaId));
+        allow write: if request.auth != null && request.auth.uid == fincaId;
       }
 
       // Jornales y contratos: los usan el dueño y el mayordomo; el mayordomo no puede cambiar los pagos
       match /jornales/{weekId} {
         allow read: if request.auth != null &&
           (request.auth.uid == fincaId ||
-           request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.mayordomoUid);
+           request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.mayordomoUid ||
+           esLector(fincaId));
         allow create, update: if request.auth != null && (
           request.auth.uid == fincaId
           ||
@@ -59,11 +75,12 @@ service cloud.firestore {
         );
       }
 
-      // Lotes, trabajadores y valor del jornal: los lee el mayordomo; solo el dueño los cambia
+      // Lotes, trabajadores y valor del jornal: los lee el mayordomo (y el lector); solo el dueño los cambia
       match /compartido/{docId} {
         allow read: if request.auth != null &&
           (request.auth.uid == fincaId ||
-           request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.mayordomoUid);
+           request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.mayordomoUid ||
+           esLector(fincaId));
         allow write: if request.auth != null && request.auth.uid == fincaId;
       }
     }
