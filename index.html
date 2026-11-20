@@ -561,10 +561,29 @@
   <!-- ===== Pergamino (solo dueño) ===== -->
   <div class="panel" id="panel-pergamino" hidden>
     <div class="tiles">
+      <div class="tile"><div class="tag">Pergamino seco producido</div><div class="val num" id="prodKg">0 kg</div><div class="sub" id="prodCargas">0 cargas</div></div>
       <div class="tile"><div class="tag">Vendido a Almacafé</div><div class="val num" id="perVendidoKg">0 kg</div><div class="sub" id="perVendidoCop">$0</div></div>
       <div class="tile"><div class="tag">Llevado a tostión</div><div class="val num" id="perTostionKg">0 kg</div><div class="sub" id="perTostadoKg">0 kg tostados</div></div>
       <div class="tile"><div class="tag">Precio por carga vendida</div><div class="val num" id="perPrecioCarga">—</div><div class="sub">carga de 125 kg</div></div>
     </div>
+    <section class="ledger">
+      <h2>Pergamino seco producido <span class="private-tag">solo dueño</span></h2>
+      <p class="lede">Kilos de pergamino seco que salen del secado (lo que produce la finca). Lo puede anotar Alfonsito con lo que le cuenta el mayordomo. Las salidas (venta o tostión) van en la tabla de abajo.</p>
+      <div class="table-scroll">
+        <table id="prodTable" hidden>
+          <thead><tr><th>Fecha</th><th>Lote</th><th>Kg pergamino seco</th><th>Nota</th><th></th></tr></thead>
+          <tbody id="prodBody"></tbody>
+        </table>
+        <div class="empty" id="prodEmpty"><strong>Sin pergamino producido esta semana</strong><p>Registra lo que salió del secado abajo.</p></div>
+        <div class="form-row">
+          <label>Fecha<input class="field" id="prodFecha" type="date"></label>
+          <label>Lote<select class="field" id="prodLote"></select></label>
+          <label>Kg de pergamino seco<input class="field num" id="prodKgInput" type="number" inputmode="decimal" min="0" step="0.1"></label>
+          <label class="wide-field">Nota<input class="field" id="prodNota" type="text" maxlength="200" placeholder="Ej.: salió del Q Dryer"></label>
+          <button type="button" class="primary-btn" id="prodAddBtn">Agregar</button>
+        </div>
+      </div>
+    </section>
     <section class="ledger">
       <h2>Salidas de pergamino seco <span class="private-tag">solo dueño</span></h2>
       <p class="lede">Registra cada salida de pergamino: si se vendió a Almacafé, con precio por kilo y total de la factura; si se llevó a tostar, con los kilos entregados y los kilos tostados que devolvieron.</p>
@@ -1407,10 +1426,11 @@
     d.pagosJornales = (d.pagosJornales && typeof d.pagosJornales === "object") ? d.pagosJornales : {};
     return d;
   }
-  function blankPriv(){ return { insumos:[], mayordomo:{ pago:0, otros:0, nota:"", pagado:false }, pergamino:[] }; }
+  function blankPriv(){ return { insumos:[], mayordomo:{ pago:0, otros:0, nota:"", pagado:false }, pergamino:[], produccion:[] }; }
   function normalizePriv(d){
     d.insumos = arr(d.insumos);
     d.pergamino = arr(d.pergamino);
+    d.produccion = arr(d.produccion);
     d.mayordomo = d.mayordomo || { pago:0, otros:0, nota:"", pagado:false };
     return d;
   }
@@ -1494,7 +1514,8 @@
   }
   var FUENTES = { jor:{ sync:function(){ return jor; }, lista:"labores" },
                   ins:{ sync:function(){ return priv; }, lista:"insumos" },
-                  per:{ sync:function(){ return priv; }, lista:"pergamino" } };
+                  per:{ sync:function(){ return priv; }, lista:"pergamino" },
+                  prod:{ sync:function(){ return priv; }, lista:"produccion" } };
   function puedeModificar(kind, item){ return kind !== "jor" || puedeEditarLabor(item); }
   function mutate(kind, id, fn, immediate){
     var S = FUENTES[kind].sync(), item = findById(S.ensure()[FUENTES[kind].lista], id);
@@ -1915,7 +1936,61 @@
     }
     updateRm(r.rm, "per", it.id);
   }
+  // ---------------- pergamino seco producido (sale del secado) ----------------
+  function buildProdRow(it){
+    var id = it.id, tr = el("tr"), r = {};
+    r.fecha = el("input", {cls:"cell-input", type:"date", "aria-label":"Fecha"});
+    r.fecha.addEventListener("change", function(){ mutate("prod", id, function(x){ x.fecha = r.fecha.value || x.fecha; }); });
+    tr.appendChild(el("td", null, [r.fecha]));
+    r.lote = el("td");
+    tr.appendChild(r.lote);
+    r.kg = el("input", {cls:"cell-input num", type:"number", min:"0", step:"0.1", inputMode:"decimal", "aria-label":"Kg de pergamino seco"});
+    r.kg.addEventListener("change", function(){ mutate("prod", id, function(x){ x.kg = num(r.kg.value); }); });
+    tr.appendChild(el("td", null, [r.kg]));
+    r.nota = el("td", {cls:"muted"});
+    tr.appendChild(r.nota);
+    r.rm = rmButton("prod", id);
+    tr.appendChild(el("td", {cls:"remove-col"}, [r.rm]));
+    tr._r = r;
+    return tr;
+  }
+  function updateProdRow(tr, it){
+    var r = tr._r;
+    setVal(r.fecha, it.fecha);
+    setVal(r.kg, it.kg, true);
+    r.lote.textContent = it.loteId ? loteNombre(it.loteId, it.loteNombre) : "Varios / sin lote";
+    r.nota.textContent = (it.origen === "alfonsito" ? "🤖 Alfonsito · " : "") + (it.nota || "");
+    updateRm(r.rm, "prod", it.id);
+  }
+  function renderProduccion(){
+    var rows = priv.view().produccion || [], kg = 0;
+    rows.forEach(function(x){ kg += num(x.kg); });
+    $("prodKg").textContent = fmtNum(kg) + " kg";
+    $("prodCargas").textContent = fmtNum(kg / KG_CARGA) + " cargas";
+    $("prodTable").hidden = rows.length === 0;
+    $("prodEmpty").hidden = rows.length !== 0;
+    if(document.activeElement !== $("prodLote")){
+      var sel = $("prodLote").value;
+      fillOptions($("prodLote"), [["", "Varios / sin lote"]].concat(sharedCfg.lotes.map(function(l){ return [l.id, l.nombre]; })), findById(sharedCfg.lotes, sel) ? sel : "");
+    }
+    syncRows($("prodBody"), sortByFecha(rows), buildProdRow, updateProdRow);
+  }
+  function addProduccion(){
+    var kg = num($("prodKgInput").value);
+    if(!kg){ $("prodKgInput").focus(); return; }
+    var loteId = $("prodLote").value;
+    priv.ensure().produccion.push({
+      id:genId(), fecha:$("prodFecha").value || defaultFecha(), loteId:loteId, loteNombre:loteId ? loteNombre(loteId, "") : "",
+      kg:kg, nota:$("prodNota").value.trim()
+    });
+    $("prodKgInput").value = ""; $("prodNota").value = "";
+    $("prodKgInput").focus();
+    renderPrivado();
+    priv.schedule(true);
+  }
+
   function renderPergamino(){
+    renderProduccion();
     var rows = priv.view().pergamino, kgV = 0, copV = 0, kgT = 0, kgTost = 0;
     rows.forEach(function(x){
       if(x.destino === "venta"){ kgV += num(x.kg); copV += num(x.total); }
@@ -1972,6 +2047,7 @@
     removeKey = null;
     $("insFecha").value = defaultFecha();
     $("perFecha").value = defaultFecha();
+    $("prodFecha").value = defaultFecha();
     jorDiaElegido = defaultFecha();
     updateJorForm();
   }
@@ -2346,6 +2422,7 @@
   $("perPrecio").addEventListener("input", perAutoTotal);
   $("perTotal").addEventListener("input", function(){ perTotalTouched = $("perTotal").value !== ""; });
   $("perAddBtn").addEventListener("click", addPergamino);
+  $("prodAddBtn").addEventListener("click", addProduccion);
   $("resRefresh").addEventListener("click", loadResumen);
   $("pdfOwnerBtn").addEventListener("click", exportOwnerPDF);
   $("datosOwnerBtn").addEventListener("click", exportDatosAlfonsito);
