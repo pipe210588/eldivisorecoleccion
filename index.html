@@ -277,6 +277,7 @@
   .note{color:var(--ink-muted);font-size:.8rem;line-height:1.5;margin:12px 2px 0;max-width:70ch;}
   .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
   .toolbar .status{font-family:"Space Mono",monospace;font-size:.72rem;color:var(--ink-muted);}
+  body.es-mayordomo .solo-dueno{display:none!important;}
 
 </style>
 
@@ -435,7 +436,7 @@
   <div class="panel" id="panel-jornales" hidden>
     <div class="tiles">
       <div class="tile"><div class="tag">Jornales de la semana</div><div class="val num" id="jorTotalDias">0</div><div class="sub" id="jorTrabajadores">0 trabajadores</div></div>
-      <div class="tile"><div class="tag">Total a pagar</div><div class="val num" id="jorTotalPago">$0</div><div class="sub">jornales + contratos</div></div>
+      <div class="tile solo-dueno"><div class="tag">Total a pagar</div><div class="val num" id="jorTotalPago">$0</div><div class="sub">jornales + contratos</div></div>
       <div class="tile"><div class="tag">Trabajadores pagados</div><div class="val num" id="jorPagados">0 de 0</div><div class="sub">se marca abajo, por trabajador</div></div>
     </div>
     <section class="ledger">
@@ -446,7 +447,7 @@
         <table id="jorTable" class="wide" hidden>
           <thead><tr>
             <th>Día</th><th class="name-col">Trabajador</th><th>Lote</th><th>Labor</th><th>Jornada</th>
-            <th>Valor</th><th class="pago-col">Total</th><th>¿Terminó el lote?</th><th class="name-col">Nota del trabajo</th><th></th>
+            <th class="solo-dueno">Valor</th><th class="pago-col solo-dueno">Total</th><th>¿Terminó el lote?</th><th class="name-col">Nota del trabajo</th><th></th>
           </tr></thead>
           <tbody id="jorBody"></tbody>
         </table>
@@ -462,7 +463,7 @@
           <label>Jornada<select class="field" id="jorJornada">
             <option value="1">Día completo</option><option value="0.5">Medio día</option><option value="contrato">Contrato</option>
           </select></label>
-          <label><span id="jorValorLabel">Valor del jornal</span><input class="field num" id="jorValor" type="number" inputmode="numeric" min="0" step="1000"></label>
+          <label class="solo-dueno"><span id="jorValorLabel">Valor del jornal</span><input class="field num" id="jorValor" type="number" inputmode="numeric" min="0" step="1000"></label>
           <label>¿Terminó la labor en todo el lote?<select class="field" id="jorTerminada"><option value="no">No</option><option value="si">Sí</option></select></label>
           <label class="wide-field">Nota del trabajo<input class="field" id="jorNota" type="text" maxlength="200" placeholder="Ej.: se fumigó contra la roya con …"></label>
           <button type="button" class="primary-btn" id="jorAddBtn">Agregar</button>
@@ -471,7 +472,7 @@
       </div>
     </section>
 
-    <section class="ledger">
+    <section class="ledger solo-dueno">
       <h2>Pago de la semana por trabajador</h2>
       <p class="lede">Se calcula solo con el registro de arriba. Marca a cada trabajador cuando le pagues.</p>
       <div class="table-scroll">
@@ -642,7 +643,7 @@
     createUserWithEmailAndPassword, signOut, inMemoryPersistence, setPersistence
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs
+    getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, runTransaction, deleteField
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   var firebaseConfig = {
@@ -1282,8 +1283,8 @@
     {nombre:"Espejos con tira bordeando carretera", ha:5.4}, {nombre:"Los Guayabos", ha:3}, {nombre:"Sacha Frutos tira derecha", ha:1.2}
   ];
 
-  var privCfg = { sueldoMayordomo:0 };
-  var sharedCfg = { lotes:[], trabajadores:[], valorJornal:0 };
+  var privCfg = { sueldoMayordomo:0, valorJornal:0 };
+  var sharedCfg = { lotes:[], trabajadores:[] };
   var legacyCfg = null;      // configuración de la versión de prueba (lotes guardados en privado/config)
   var privCfgTimer = null, sharedCfgTimer = null, sharedUnsub = null;
   var removeKey = null;
@@ -1334,7 +1335,18 @@
   // Una labor: jornada 1 o 0.5 (jornales × valor del día) o "contrato" (valor pactado, toda la semana)
   function esContrato(x){ return x.jornada === "contrato"; }
   function laborJornales(x){ return esContrato(x) ? 0 : (Number(x.jornada) || 0); }
-  function laborTotal(x){ return esContrato(x) ? num(x.valor) : laborJornales(x) * num(x.valor); }
+  // Los valores en pesos de jornales y contratos van en la parte privada (2026-11-19: el mayordomo ve las
+  // labores, pero no los pesos): privado/{semana}.valores = {idLabor: valor}. Si una labor no tiene valor
+  // guardado: el valor viejo de la labor (antes de la migración) o, si es jornal, el valor del jornal
+  // (privado/config). Un contrato sin valor queda en 0 hasta que el dueño lo ponga.
+  function valorLabor(x, p){
+    if(p === undefined) p = priv.view();
+    var vals = p && p.valores;
+    if(vals && vals[x.id] !== undefined && vals[x.id] !== null) return num(vals[x.id]);
+    if(x.valor !== undefined && x.valor !== null && x.valor !== "") return num(x.valor);
+    return esContrato(x) ? 0 : num(privCfg.valorJornal);
+  }
+  function laborTotal(x, p){ var v = valorLabor(x, p); return esContrato(x) ? v : laborJornales(x) * v; }
   function nombreKey(n){ return String(n || "").trim().toLowerCase(); }
   function fmtNum(n){ return (Math.round(n*100)/100).toLocaleString("es-CO", {maximumFractionDigits:2}); }
   function diaLabel(fecha){ var d = parseYmd(fecha); return DIAS_CORTOS[d.getDay()] + " " + d.getDate(); }
@@ -1426,8 +1438,9 @@
     d.pagosJornales = (d.pagosJornales && typeof d.pagosJornales === "object") ? d.pagosJornales : {};
     return d;
   }
-  function blankPriv(){ return { insumos:[], mayordomo:{ pago:0, otros:0, nota:"", pagado:false }, pergamino:[], produccion:[] }; }
+  function blankPriv(){ return { insumos:[], mayordomo:{ pago:0, otros:0, nota:"", pagado:false }, pergamino:[], produccion:[], valores:{} }; }
   function normalizePriv(d){
+    d.valores = (d.valores && typeof d.valores === "object") ? d.valores : {};
     d.insumos = arr(d.insumos);
     d.pergamino = arr(d.pergamino);
     d.produccion = arr(d.produccion);
@@ -1447,15 +1460,68 @@
   function loadPrivCfg(){
     if(!isOwnerRole()) return Promise.resolve();
     return getDoc(doc(firestore, "fincas", state.fincaId, "privado", "config")).then(function(s){
-      if(s.exists()){ var c = s.data(); privCfg.sueldoMayordomo = num(c.sueldoMayordomo); legacyCfg = c; }
+      if(s.exists()){ var c = s.data(); privCfg.sueldoMayordomo = num(c.sueldoMayordomo); privCfg.valorJornal = num(c.valorJornal); legacyCfg = c; }
     }).catch(function(){});
+  }
+
+  // Migración (2026-11-19), la corre el dueño al entrar: los pesos de jornales y contratos pasan de
+  // jornales/{semana} (que ve el mayordomo) a privado/{semana}.valores, y el valor del jornal pasa de
+  // compartido/config a privado/config. Cada semana va en una transacción para no pisar al mayordomo.
+  // De paso fija el valor de los jornales que no lo tienen, para que un cambio de tarifa no cambie semanas viejas.
+  var migracionHecha = false;
+  function migrarValoresPrivados(){
+    if(!isOwnerRole() || !state.fincaId || migracionHecha) return Promise.resolve();
+    migracionHecha = true;
+    var fid = state.fincaId, compRef = doc(firestore, "fincas", fid, "compartido", "config");
+    return getDoc(compRef).then(function(s){
+      if(!s.exists() || s.data().valorJornal === undefined) return;
+      var v = num(s.data().valorJornal);
+      if(!privCfg.valorJornal && v){ privCfg.valorJornal = v; }
+      return setDoc(doc(firestore, "fincas", fid, "privado", "config"), { valorJornal: privCfg.valorJornal || 0 }, { merge:true })
+        .then(function(){ return updateDoc(compRef, { valorJornal: deleteField() }); });
+    }).then(function(){
+      return getDocs(collection(firestore, "fincas", fid, "jornales"));
+    }).then(function(snap){
+      var semanas = [];
+      snap.forEach(function(d){ if(/^\d{4}-\d{2}-\d{2}$/.test(d.id)) semanas.push(d.id); });
+      return semanas.reduce(function(cadena, wk){
+        return cadena.then(function(){
+          var jRef = doc(firestore, "fincas", fid, "jornales", wk), pRef = doc(firestore, "fincas", fid, "privado", wk);
+          return runTransaction(firestore, function(tx){
+            return Promise.all([tx.get(jRef), tx.get(pRef)]).then(function(r){
+              var jSnap = r[0], pSnap = r[1];
+              if(!jSnap.exists()) return;
+              var labores = arr(jSnap.data().labores);
+              var vals = Object.assign({}, (pSnap.exists() && pSnap.data().valores) || {});
+              var cambiaJor = false, cambiaVal = false;
+              var nuevas = labores.map(function(x){
+                var y = x;
+                if(Object.prototype.hasOwnProperty.call(x, "valor")){
+                  if(vals[x.id] === undefined){ vals[x.id] = num(x.valor); cambiaVal = true; }
+                  y = Object.assign({}, x); delete y.valor; cambiaJor = true;
+                } else if(vals[x.id] === undefined && !esContrato(x) && privCfg.valorJornal){
+                  vals[x.id] = privCfg.valorJornal; cambiaVal = true;
+                }
+                return y;
+              });
+              if(cambiaJor) tx.update(jRef, { labores: nuevas });
+              if(cambiaVal){
+                if(pSnap.exists()) tx.update(pRef, { valores: vals });
+                else tx.set(pRef, { valores: vals });
+              }
+            });
+          });
+        });
+      }, Promise.resolve());
+    }).catch(function(e){ migracionHecha = false; console.warn("Migración de valores privados incompleta", e && e.code); });
   }
   function savePrivCfg(){
     if(!isOwnerRole() || !state.fincaId) return;
     if(privCfgTimer) clearTimeout(privCfgTimer);
     privCfgTimer = setTimeout(function(){
       privCfgTimer = null;
-      setDoc(doc(firestore, "fincas", state.fincaId, "privado", "config"), { sueldoMayordomo: privCfg.sueldoMayordomo || 0 })
+      setDoc(doc(firestore, "fincas", state.fincaId, "privado", "config"),
+        { sueldoMayordomo: privCfg.sueldoMayordomo || 0, valorJornal: privCfg.valorJornal || 0 }, { merge:true })
         .catch(function(){ setSyncStatus("off"); });
     }, 600);
   }
@@ -1468,12 +1534,11 @@
         var c = snap.data();
         sharedCfg.lotes = arr(c.lotes);
         sharedCfg.trabajadores = arr(c.trabajadores);
-        sharedCfg.valorJornal = num(c.valorJornal);
       } else if(isOwnerRole() && legacyCfg && arr(legacyCfg.lotes).length){
         // Pasa los lotes de la versión de prueba a la configuración compartida
         sharedCfg.lotes = arr(legacyCfg.lotes);
         sharedCfg.trabajadores = arr(legacyCfg.trabajadores);
-        sharedCfg.valorJornal = num(legacyCfg.valorJornal);
+        if(!privCfg.valorJornal && num(legacyCfg.valorJornal)){ privCfg.valorJornal = num(legacyCfg.valorJornal); savePrivCfg(); }
         legacyCfg = null;
         saveSharedCfg(true);
       }
@@ -1486,16 +1551,18 @@
     if(sharedCfgTimer) clearTimeout(sharedCfgTimer);
     sharedCfgTimer = setTimeout(function(){
       sharedCfgTimer = null;
+      // Sin valorJornal: los pesos van en privado/config (el mayordomo lee compartido)
       setDoc(doc(firestore, "fincas", state.fincaId, "compartido", "config"), {
-        lotes: sharedCfg.lotes, trabajadores: sharedCfg.trabajadores, valorJornal: sharedCfg.valorJornal || 0
+        lotes: sharedCfg.lotes, trabajadores: sharedCfg.trabajadores
       }).catch(function(){ setSyncStatus("off"); });
     }, immediate ? 0 : 600);
   }
   function resetConfigs(){
     if(sharedUnsub){ sharedUnsub(); sharedUnsub = null; }
-    privCfg = { sueldoMayordomo:0 };
-    sharedCfg = { lotes:[], trabajadores:[], valorJornal:0 };
+    privCfg = { sueldoMayordomo:0, valorJornal:0 };
+    sharedCfg = { lotes:[], trabajadores:[] };
     legacyCfg = null;
+    migracionHecha = false;
   }
 
   // ---------------- filas con clave (no se reconstruyen al escribir) ----------------
@@ -1619,8 +1686,15 @@
       }, true);
     });
     r.valor = el("input", {cls:"cell-input num", type:"number", min:"0", step:"1000", inputMode:"numeric", "aria-label":"Valor"});
-    r.valor.addEventListener("change", function(){ mutate("jor", id, function(x){ x.valor = num(r.valor.value); }); });
-    r.total = el("td", {cls:"money"});
+    // El valor va a la parte privada; solo el dueño lo cambia
+    r.valor.addEventListener("change", function(){
+      if(!isOwnerRole()) return;
+      priv.ensure().valores[id] = num(r.valor.value);
+      mutate("jor", id, function(x){ delete x.valor; });
+      renderPrivado();
+      priv.schedule();
+    });
+    r.total = el("td", {cls:"money solo-dueno"});
     r.term = el("select", {cls:"cell-input", "aria-label":"¿Terminó la labor en todo el lote?"});
     fillOptions(r.term, [["no","No"],["si","Sí"]], it.terminada ? "si" : "no");
     r.term.addEventListener("change", function(){ mutate("jor", id, function(x){ x.terminada = r.term.value === "si"; }, true); });
@@ -1632,7 +1706,7 @@
     tr.appendChild(el("td", null, [r.lote]));
     tr.appendChild(el("td", null, [r.labor]));
     tr.appendChild(el("td", null, [r.jornada]));
-    tr.appendChild(el("td", null, [r.valor]));
+    tr.appendChild(el("td", {cls:"solo-dueno"}, [r.valor]));
     tr.appendChild(r.total);
     tr.appendChild(el("td", null, [r.term]));
     tr.appendChild(el("td", {cls:"name-col"}, [r.nota]));
@@ -1655,15 +1729,20 @@
     }
     if(a !== r.labor) fillOptions(r.labor, LABORES, it.labor);
     if(a !== r.jornada) r.jornada.value = jornadaValue(it);
-    setVal(r.valor, it.valor, true);
-    r.valor.placeholder = esContrato(it) ? "Valor pactado" : "Por día";
-    r.total.textContent = fmtCOP.format(laborTotal(it));
+    if(isOwnerRole()){
+      setVal(r.valor, valorLabor(it), true);
+      r.valor.placeholder = esContrato(it) ? "Valor pactado" : "Por día";
+      r.total.textContent = fmtCOP.format(laborTotal(it));
+    } else {
+      r.valor.value = ""; r.total.textContent = "";
+    }
     if(a !== r.term) r.term.value = it.terminada ? "si" : "no";
     r.term.classList.toggle("si", !!it.terminada);
     setVal(r.nota, it.nota);
     // El día de un contrato no se cambia, y el mayordomo no mueve labores de día
     r.dia.disabled = esContrato(it) || !editable || isMayordomoRole();
-    [r.name, r.lote, r.labor, r.jornada, r.valor, r.term, r.nota, r.rm].forEach(function(n){ n.disabled = !editable; });
+    [r.name, r.lote, r.labor, r.jornada, r.term, r.nota, r.rm].forEach(function(n){ n.disabled = !editable; });
+    r.valor.disabled = !isOwnerRole();
     updateRm(r.rm, "jor", it.id);
   }
   function pagosPorTrabajador(labores){
@@ -1671,7 +1750,7 @@
     labores.forEach(function(x){
       var k = nombreKey(x.trabajador);
       if(!map[k]){ map[k] = { key:k, nombre:x.trabajador || "Sin nombre", jornales:0, contratos:0, total:0 }; orden.push(k); }
-      if(esContrato(x)) map[k].contratos += num(x.valor); else map[k].jornales += laborJornales(x);
+      if(esContrato(x)) map[k].contratos += valorLabor(x); else map[k].jornales += laborJornales(x);
       map[k].total += laborTotal(x);
     });
     return orden.map(function(k){ return map[k]; }).sort(function(a,b){ return a.nombre.localeCompare(b.nombre, "es"); });
@@ -1736,8 +1815,8 @@
       var k = nombreKey(n);
       if(k && !nombres[k]){ nombres[k] = true; dl.appendChild(el("option", {value:n})); }
     });
-    if(!$("jorValor").value && $("jorJornada").value !== "contrato" && sharedCfg.valorJornal){
-      setVal($("jorValor"), sharedCfg.valorJornal);
+    if(isOwnerRole() && !$("jorValor").value && $("jorJornada").value !== "contrato" && privCfg.valorJornal){
+      setVal($("jorValor"), privCfg.valorJornal);
     }
     if(isOwnerRole()) renderLotes();
   }
@@ -1747,13 +1826,18 @@
     if(!nombre){ $("jorNombre").focus(); return; }
     var jornada = $("jorJornada").value, valor = num($("jorValor").value), loteId = $("jorLote").value;
     var fecha = jornada === "contrato" ? state.weekId : (isMayordomoRole() ? todayYmd() : ($("jorDia").value || defaultFecha()));
+    var nuevoId = genId();
+    // Sin pesos en jornales: el valor va a privado/{semana}.valores (solo el dueño lo pone)
     jor.ensure().labores.push({
-      id: genId(), fecha: fecha, trabajador: nombre, loteId: loteId, loteNombre: loteNombre(loteId, ""),
+      id: nuevoId, fecha: fecha, trabajador: nombre, loteId: loteId, loteNombre: loteNombre(loteId, ""),
       labor: $("jorLabor").value, jornada: jornada === "contrato" ? "contrato" : Number(jornada),
-      valor: valor, terminada: $("jorTerminada").value === "si", nota: $("jorNota").value.trim()
+      terminada: $("jorTerminada").value === "si", nota: $("jorNota").value.trim()
     });
     recordarTrabajador(nombre);
-    if(isOwnerRole() && jornada !== "contrato" && valor > 0 && valor !== sharedCfg.valorJornal){ sharedCfg.valorJornal = valor; saveSharedCfg(); }
+    if(isOwnerRole()){
+      if(valor > 0 || jornada === "contrato"){ priv.ensure().valores[nuevoId] = valor; priv.schedule(true); }
+      if(jornada !== "contrato" && valor > 0 && valor !== privCfg.valorJornal){ privCfg.valorJornal = valor; savePrivCfg(); }
+    }
     // Se conservan día, lote, labor y valor para registrar rápido a otro trabajador en la misma labor
     $("jorNombre").value = ""; $("jorNota").value = ""; $("jorTerminada").value = "no";
     $("jorNombre").focus();
@@ -2066,7 +2150,7 @@
       (s.cogedores || []).forEach(function(c){ if(c && c.kg) t.recKg += totalKgOf(c); });
       t.rec = t.recKg * num(s.precioKg);
     }
-    if(j) arr(j.labores).forEach(function(x){ t.jor += laborTotal(x); });
+    if(j) arr(j.labores).forEach(function(x){ t.jor += laborTotal(x, p || null); });
     if(p){
       arr(p.insumos).forEach(function(x){ t.ins += num(x.valor); });
       if(p.mayordomo) t.may = num(p.mayordomo.pago) + num(p.mayordomo.otros);
@@ -2102,7 +2186,7 @@
       match.forEach(function(m, i){ if(m) Object.keys(t).forEach(function(k){ cols[i][k] += t[k]; }); });
       arr(jr[id] && jr[id].labores).forEach(function(x){
         var slot = x.loteId ? loteSlot(x.loteId, loteNombre(x.loteId, x.loteNombre) || "Lote eliminado") : loteSlot("_sin", "Sin lote");
-        match.forEach(function(m, i){ if(m) slot.v[i] += laborTotal(x); });
+        match.forEach(function(m, i){ if(m) slot.v[i] += laborTotal(x, pv[id] || null); });
       });
     });
     var cop = function(f){ return function(c){ return fmtCOP.format(f(c)); }; };
@@ -2302,7 +2386,7 @@
             esContrato(x) ? "Toda la semana" : diaLabel(x.fecha), x.trabajador || "",
             loteNombre(x.loteId, x.loteNombre) || "Sin lote", x.labor || "",
             esContrato(x) ? "Contrato" : (laborJornales(x) === 0.5 ? "Medio día" : "Día completo"),
-            fmtCOP.format(num(x.valor)), fmtCOP.format(laborTotal(x)), x.terminada ? "Sí" : "No", x.nota || ""
+            fmtCOP.format(valorLabor(x)), fmtCOP.format(laborTotal(x)), x.terminada ? "Sí" : "No", x.nota || ""
           ];
         }) : vacio(9), { columnStyles:{ 8:{ cellWidth:190 } } });
       var pagos = pagosPorTrabajador(j.labores);
@@ -2371,6 +2455,8 @@
     if(name === "resumen") loadResumen();
   }
   function setupTabs(){
+    // El mayordomo ve labores y contratos, pero no los pesos (2026-11-19)
+    document.body.classList.toggle("es-mayordomo", isMayordomoRole());
     $("ownerTabs").hidden = !state.role;
     TABS.forEach(function(t){ $("tab-" + t).hidden = !tabPermitida(t); });
     $("pdfOwnerBtn").hidden = !isOwnerRole();
@@ -2392,7 +2478,7 @@
   $("jorJornada").addEventListener("change", function(){
     var contrato = $("jorJornada").value === "contrato";
     $("jorValorLabel").textContent = contrato ? "Valor del contrato" : "Valor del jornal";
-    $("jorValor").value = contrato ? "" : (sharedCfg.valorJornal || "");
+    $("jorValor").value = contrato ? "" : (isOwnerRole() ? (privCfg.valorJornal || "") : "");
     updateJorForm();
   });
   $("jorDia").addEventListener("change", function(){ if($("jorDia").value !== "semana") jorDiaElegido = $("jorDia").value; });
@@ -2593,6 +2679,7 @@
       return loadPrivCfg().then(function(){
         subscribeShared();
         subscribeSecciones(state.weekId);
+        return migrarValoresPrivados();
       });
     });
   });
