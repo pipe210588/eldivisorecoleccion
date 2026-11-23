@@ -33,23 +33,15 @@ service cloud.firestore {
         request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.get('mayordomoUid', '');
     }
 
-    // Días en que se coge café (D-104: no se coge sábado ni domingo).
-    function diasCogida() {
-      return ['lun', 'mar', 'mie', 'jue', 'vie'];
-    }
-
     // Días que cambia esta escritura frente a lo que hay guardado.
     function diasQueCambian() {
       return request.resource.data.diff(resource == null ? {} : resource.data).affectedKeys();
     }
 
-    // Exactamente un día de lunes a viernes, y ese día sigue en el documento (no se borra).
-    function cambiaUnSoloDia() {
-      return diasQueCambian().size() == 1 && diasQueCambian().hasOnly(diasCogida());
-    }
-
-    function elDia() {
-      return diasQueCambian().toList()[0];
+    // La escritura cambia SOLO el día d, y ese día sigue en el documento (no se borra).
+    // Los días válidos son de lunes a viernes (D-104: no se coge sábado ni domingo).
+    function cambiaSoloElDia(d) {
+      return diasQueCambian().size() == 1 && diasQueCambian().hasOnly([d]) && d in request.resource.data;
     }
 
     // Entrada que escribe Alfonsito: campos fijos, origen "alfonsito", sin marca de persona.
@@ -72,13 +64,15 @@ service cloud.firestore {
          resource.data[dia].get('editadoPorPersona', false) == false);
     }
 
+    function alfonsitoEnDia(d) {
+      return cambiaSoloElDia(d) && entradaAlfonsito(request.resource.data[d]) && alfonsitoPuedeTocar(d);
+    }
+
     function escrituraDeAlfonsito(fincaId, weekId) {
       return esEscritor(fincaId) &&
         exists(/databases/$(database)/documents/fincas/$(fincaId)/semanas/$(weekId)) &&
-        cambiaUnSoloDia() &&
-        elDia() in request.resource.data &&
-        entradaAlfonsito(request.resource.data[elDia()]) &&
-        alfonsitoPuedeTocar(elDia());
+        (alfonsitoEnDia('lun') || alfonsitoEnDia('mar') || alfonsitoEnDia('mie') ||
+         alfonsitoEnDia('jue') || alfonsitoEnDia('vie'));
     }
 
     // Entrada que escribe una persona desde el Libro: siempre con la marca.
@@ -90,12 +84,15 @@ service cloud.firestore {
         e.get('loteNombre', '') is string;
     }
 
+    function personaEnDia(d) {
+      return cambiaSoloElDia(d) && entradaPersona(request.resource.data[d]);
+    }
+
     function escrituraDePersona(fincaId) {
       return request.auth != null &&
         (request.auth.uid == fincaId || esMayordomo(fincaId)) &&
-        cambiaUnSoloDia() &&
-        elDia() in request.resource.data &&
-        entradaPersona(request.resource.data[elDia()]);
+        (personaEnDia('lun') || personaEnDia('mar') || personaEnDia('mie') ||
+         personaEnDia('jue') || personaEnDia('vie'));
     }
 
     match /mayordomos/{muid} {
