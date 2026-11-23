@@ -256,6 +256,9 @@
   .lotes-box .summary-title{font-family:"Petrona",Georgia,serif;font-size:1.2rem;font-weight:600;}
   .lotes-box .summary-meta{font-family:"Space Mono",monospace;font-size:.72rem;color:var(--ink-muted);}
   @media (prefers-reduced-motion: reduce){ .lotes-box summary::before{transition:none;} }
+  /* Lote cogido por día (Alfonsito F4) */
+  #loteCogidaTable select{width:100%;min-width:92px;}
+  .lote-marca{font-family:"Space Mono",monospace;font-size:.62rem;color:var(--ink-muted);margin-top:3px;min-height:.8em;}
 
   /* ---- mayordomo ---- */
   .pay-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;display:grid;gap:14px;
@@ -425,6 +428,27 @@
           <tr id="lluviaRow">
             <td class="name-col">Lluvia (mm)</td>
             <td class="total-col num" id="lluviaTotal">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Lote cogido por día (Alfonsito F4, D-104): un lote por día, el de más tiempo. No se coge sábado ni domingo. -->
+  <section class="ledger" id="loteCogidaSection">
+    <h2>🧺 Lote cogido</h2>
+    <p class="lede">En qué lote se cogió cada día. Si ese día se pasó a otro lote, va el lote donde estuvieron más tiempo. Lo anota Alfonsito con lo que le cuenta el mayordomo, o se elige aquí. Si lo cambias aquí, queda como corrección y Alfonsito ya no lo toca.</p>
+    <div class="table-scroll">
+      <table id="loteCogidaTable">
+        <thead>
+          <tr>
+            <th class="name-col"></th>
+            <th data-day="lun">Lun</th><th data-day="mar">Mar</th><th data-day="mie">Mié</th><th data-day="jue">Jue</th><th data-day="vie">Vie</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="loteCogidaRow">
+            <td class="name-col">Lote</td>
           </tr>
         </tbody>
       </table>
@@ -828,9 +852,93 @@
     scheduleSave();
   }
 
+  // ---------------- lote cogido (Alfonsito F4, D-104) ----------------
+  // Va en un documento aparte de la semana: fincas/{id}/lotesCogida/{lunes} = {lun: {...}, …}.
+  // La semana se guarda completa (setDoc); si el lote viviera ahí, un guardado del mayordomo
+  // podría borrar lo que anotó Alfonsito, y al revés.
+  // Una corrección de una persona lleva origen "persona" y editadoPorPersona: true, y Alfonsito
+  // ya no la toca (también si se deja en "—"). Las reglas de Firestore exigen esa marca.
+  var DIAS_COGIDA = ["lun", "mar", "mie", "jue", "vie"]; // no se coge sábado ni domingo
+  var loteCogida = { doc: {}, unsub: null };
+  function lotesFinca(){ return arr(sharedCfg && sharedCfg.lotes); }
+  function buildLoteCogidaRow(){
+    var row = document.getElementById("loteCogidaRow");
+    DIAS_COGIDA.forEach(function(key){
+      var td = document.createElement("td");
+      td.className = "day-col";
+      td.setAttribute("data-day", key);
+      var sel = document.createElement("select");
+      sel.addEventListener("focus", function(){ state.focusField = "lote:" + key; });
+      sel.addEventListener("blur", function(){ state.focusField = null; });
+      sel.addEventListener("change", function(){ commitLoteCogida(key, sel.value); });
+      var marca = document.createElement("div");
+      marca.className = "lote-marca";
+      td.appendChild(sel);
+      td.appendChild(marca);
+      row.appendChild(td);
+    });
+  }
+  function renderLoteCogida(){
+    if(!document.querySelector("#loteCogidaRow td.day-col")) buildLoteCogidaRow();
+    var esSemanaActual = state.weekId === ymd(mondayOf(new Date()));
+    var tKey = esSemanaActual ? todayKey() : null;
+    var base = [["", "—"]].concat(lotesFinca().map(function(l){ return [l.id, l.nombre]; }));
+    Array.prototype.forEach.call(document.querySelectorAll("#loteCogidaRow td.day-col"), function(td){
+      var key = td.getAttribute("data-day");
+      var sel = td.querySelector("select");
+      var e = loteCogida.doc[key];
+      var actual = e && e.loteId ? e.loteId : "";
+      if(!isFocused("lote:" + key)){
+        var opciones = base.slice();
+        if(actual && !findById(lotesFinca(), actual)) opciones.push([actual, (e && e.loteNombre) || "Lote eliminado"]);
+        fillOptions(sel, opciones, actual);
+        sel.value = actual;
+      }
+      sel.disabled = !state.fincaId || !mayordomoCanEditDay(key);
+      td.querySelector(".lote-marca").textContent = !e ? "" : (e.origen === "alfonsito" && !e.editadoPorPersona ? "Alfonsito" : "Corregido");
+      td.classList.toggle("today-col", key === tKey);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("#loteCogidaTable thead th[data-day]"), function(th){
+      th.classList.toggle("today-col", th.getAttribute("data-day") === tKey);
+    });
+  }
+  function commitLoteCogida(dayKey, loteId){
+    if(!state.fincaId || !mayordomoCanEditDay(dayKey)) return;
+    var l = loteId ? findById(lotesFinca(), loteId) : null;
+    var entrada = {
+      loteId: loteId || "",
+      loteNombre: l ? l.nombre : "",
+      origen: "persona",
+      editadoPorPersona: true,
+      editadoPor: state.role === "mayordomo" ? "mayordomo" : "dueño",
+      editadoEn: new Date().toISOString()
+    };
+    var cambio = {};
+    cambio[dayKey] = entrada;
+    var ref = doc(firestore, "fincas", state.fincaId, "lotesCogida", state.weekId);
+    loteCogida.doc[dayKey] = entrada;
+    renderLoteCogida();
+    setSyncStatus("busy");
+    // updateDoc cambia solo ese día; si la semana todavía no tiene documento, se crea con ese día
+    updateDoc(ref, cambio).catch(function(err){
+      if(err && err.code === "not-found") return setDoc(ref, cambio);
+      throw err;
+    }).then(function(){ setSyncStatus("on"); updateLastSaved(); }, function(){ setSyncStatus("off"); });
+  }
+  function subscribeLoteCogida(weekId){
+    if(loteCogida.unsub){ loteCogida.unsub(); loteCogida.unsub = null; }
+    loteCogida.doc = {};
+    if(!state.fincaId) return;
+    loteCogida.unsub = onSnapshot(doc(firestore, "fincas", state.fincaId, "lotesCogida", weekId), function(snap){
+      loteCogida.doc = snap.exists() ? snap.data() : {};
+      renderLoteCogida();
+    }, function(){ setSyncStatus("off"); });
+  }
+
   function render(){
     document.getElementById("weekLabel").textContent = weekLabel(parseYmd(state.weekId));
     renderLluvia();
+    renderLoteCogida();
 
     var d = state.doc || blankWeekDoc();
     var cogedores = d.cogedores || [];
@@ -1128,6 +1236,7 @@
 
   function subscribeWeek(weekId){
     if(state.unsub){ state.unsub(); state.unsub = null; }
+    subscribeLoteCogida(weekId);
     state.doc = loadLocalBackup(weekId);
     state.lastSentJSON = null;
     render();
@@ -1542,6 +1651,7 @@
         legacyCfg = null;
         saveSharedCfg(true);
       }
+      renderLoteCogida();
       if(focusInNewPanels()){ jor.deferred = true; return; }
       renderPrivado();
     }, function(){ setSyncStatus("off"); });
@@ -2643,6 +2753,8 @@
 
   onAuthStateChanged(auth, function(user){
     if(state.unsub){ state.unsub(); state.unsub = null; }
+    if(loteCogida.unsub){ loteCogida.unsub(); loteCogida.unsub = null; }
+    loteCogida.doc = {};
     jor.stop();
     priv.stop();
     resetConfigs();

@@ -7,6 +7,11 @@ rules_version = '2';
 // 2026-11-19: lector de solo lectura (Alfonsito, agente de la finca, D-036/D-044).
 //   El dueño pone el uid del lector en fincas/{id}.lectorUid. El lector lee todo
 //   lo de esa finca y no escribe nada.
+// 2026-11-22: lote cogido por día (Alfonsito F4, D-104), en fincas/{id}/lotesCogida/{lunes}.
+//   Alfonsito escribe SOLO ahí, y solo si el dueño puso su uid en fincas/{id}.escritorUid
+//   (esa es la aprobación separada de escritura). Un día por escritura, de lunes a viernes,
+//   en una semana que ya exista, con campos fijos y sin tocar lo que corrigió una persona.
+//   Las personas (dueño y mayordomo) escriben con la marca editadoPorPersona.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -15,6 +20,79 @@ service cloud.firestore {
     function esLector(fincaId) {
       return request.auth != null &&
         request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.get('lectorUid', '');
+    }
+
+    // ¿Quien hace la petición es el escritor autorizado de esta finca (Alfonsito con escritura)?
+    function esEscritor(fincaId) {
+      return request.auth != null &&
+        request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.get('escritorUid', '');
+    }
+
+    function esMayordomo(fincaId) {
+      return request.auth != null &&
+        request.auth.uid == get(/databases/$(database)/documents/fincas/$(fincaId)).data.get('mayordomoUid', '');
+    }
+
+    // Días que cambia esta escritura frente a lo que hay guardado.
+    function diasQueCambian() {
+      return request.resource.data.diff(resource == null ? {} : resource.data).affectedKeys();
+    }
+
+    // La escritura cambia SOLO el día d, y ese día sigue en el documento (no se borra).
+    // Los días válidos son de lunes a viernes (D-104: no se coge sábado ni domingo).
+    function cambiaSoloElDia(d) {
+      return diasQueCambian().size() == 1 && diasQueCambian().hasOnly([d]) && d in request.resource.data;
+    }
+
+    // Entrada que escribe Alfonsito: campos fijos, origen "alfonsito", sin marca de persona.
+    function entradaAlfonsito(e) {
+      return e is map &&
+        e.keys().hasAll(['loteId', 'loteNombre', 'origen', 'mensajeId', 'creadoEn', 'huella']) &&
+        e.keys().hasOnly(['loteId', 'loteNombre', 'origen', 'mensajeId', 'creadoEn', 'huella']) &&
+        e.origen == 'alfonsito' &&
+        e.loteId is string && e.loteId.size() > 0 && e.loteId.size() <= 64 &&
+        e.loteNombre is string && e.loteNombre.size() <= 80 &&
+        e.mensajeId is string && e.mensajeId.size() > 0 && e.mensajeId.size() <= 200 &&
+        e.creadoEn is timestamp &&
+        e.huella is string && e.huella.size() == 64;
+    }
+
+    // Alfonsito solo llena un día vacío o reemplaza una entrada suya que nadie corrigió.
+    function alfonsitoPuedeTocar(dia) {
+      return resource == null || !(dia in resource.data) ||
+        (resource.data[dia].get('origen', '') == 'alfonsito' &&
+         resource.data[dia].get('editadoPorPersona', false) == false);
+    }
+
+    function alfonsitoEnDia(d) {
+      return cambiaSoloElDia(d) && entradaAlfonsito(request.resource.data[d]) && alfonsitoPuedeTocar(d);
+    }
+
+    function escrituraDeAlfonsito(fincaId, weekId) {
+      return esEscritor(fincaId) &&
+        exists(/databases/$(database)/documents/fincas/$(fincaId)/semanas/$(weekId)) &&
+        (alfonsitoEnDia('lun') || alfonsitoEnDia('mar') || alfonsitoEnDia('mie') ||
+         alfonsitoEnDia('jue') || alfonsitoEnDia('vie'));
+    }
+
+    // Entrada que escribe una persona desde el Libro: siempre con la marca.
+    function entradaPersona(e) {
+      return e is map &&
+        e.get('origen', '') == 'persona' &&
+        e.get('editadoPorPersona', false) == true &&
+        e.get('loteId', null) is string && e.loteId.size() <= 64 &&
+        e.get('loteNombre', '') is string;
+    }
+
+    function personaEnDia(d) {
+      return cambiaSoloElDia(d) && entradaPersona(request.resource.data[d]);
+    }
+
+    function escrituraDePersona(fincaId) {
+      return request.auth != null &&
+        (request.auth.uid == fincaId || esMayordomo(fincaId)) &&
+        (personaEnDia('lun') || personaEnDia('mar') || personaEnDia('mie') ||
+         personaEnDia('jue') || personaEnDia('vie'));
     }
 
     match /mayordomos/{muid} {
@@ -73,6 +151,15 @@ service cloud.firestore {
               (resource != null ? resource.data.get('pagosJornales', {}) : {})
           )
         );
+      }
+
+      // Lote cogido por día (D-104). Lo leen el dueño, el mayordomo, el lector y el escritor.
+      // Escriben Alfonsito (con escritorUid) y las personas, cada uno con sus reglas; solo el dueño borra.
+      match /lotesCogida/{weekId} {
+        allow read: if request.auth != null &&
+          (request.auth.uid == fincaId || esMayordomo(fincaId) || esLector(fincaId) || esEscritor(fincaId));
+        allow create, update: if escrituraDeAlfonsito(fincaId, weekId) || escrituraDePersona(fincaId);
+        allow delete: if request.auth != null && request.auth.uid == fincaId;
       }
 
       // Lotes, trabajadores y valor del jornal: los lee el mayordomo (y el lector); solo el dueño los cambia
