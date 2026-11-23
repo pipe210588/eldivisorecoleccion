@@ -1,0 +1,23 @@
+name: Reglas de Firestore
+
+# Prueba firestore.rules en el emulador oficial de Firebase, con datos ficticios.
+# No toca el proyecto real: el emulador usa el proyecto de prueba "demo-libro".
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  reglas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install --no-audit --no-fund
+      - run: npx --yes firebase-tools@13.29.1 emulators:exec --only firestore --project demo-libro "npm test"
